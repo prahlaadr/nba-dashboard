@@ -16,6 +16,7 @@ import { transformAssistNetwork } from '@/lib/transformers/assistNetwork';
 import { transformScoreProgression } from '@/lib/transformers/winProbability';
 import { transformPlayerImpact } from '@/lib/transformers/playerImpact';
 import { transformMatchStats } from '@/lib/transformers/matchStats';
+import { getTeamColors } from '@/lib/teamColors';
 
 export default function GamePage() {
   const params = useParams<{ gameId: string }>();
@@ -74,6 +75,9 @@ export default function GamePage() {
     );
   }
 
+  const awayChartColor = getTeamColors(meta.data.awayTeam.abbreviation).chart;
+  const homeChartColor = getTeamColors(meta.data.homeTeam.abbreviation).chart;
+
   return (
     <div className="max-w-7xl mx-auto px-4 py-6 space-y-6">
       <Link
@@ -125,7 +129,7 @@ export default function GamePage() {
             )}
           </div>
 
-          {/* Quick stats */}
+          {/* Quarter scores */}
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
             <h3 className="text-sm font-semibold text-gray-700 mb-3">
               Quarter Scores
@@ -138,73 +142,110 @@ export default function GamePage() {
               const headers = Array.from({ length: maxPeriods }, (_, i) =>
                 i < 4 ? `Q${i + 1}` : `OT${i - 3}`
               );
+              const awayScores = meta.data.awayTeam.quarterScores;
+              const homeScores = meta.data.homeTeam.quarterScores;
               return (
                 <div
-                  className="grid gap-2 text-xs text-center"
+                  className="grid gap-y-2 gap-x-1 text-sm text-center"
                   style={{
-                    gridTemplateColumns: `60px repeat(${maxPeriods}, 1fr)`,
+                    gridTemplateColumns: `60px repeat(${maxPeriods}, 1fr) 40px`,
                   }}
                 >
-                  <div className="text-gray-400">Team</div>
+                  {/* Header row */}
+                  <div />
                   {headers.map((h) => (
-                    <div key={h} className="text-gray-400">{h}</div>
+                    <div key={h} className="text-xs text-gray-400 font-medium">{h}</div>
                   ))}
-                  <div className="font-medium text-gray-600">
+                  <div className="text-xs text-gray-400 font-medium">T</div>
+
+                  {/* Away row */}
+                  <div className="font-semibold text-left" style={{ color: awayChartColor }}>
                     {meta.data.awayTeam.abbreviation}
                   </div>
-                  {meta.data.awayTeam.quarterScores.map((s, i) => (
-                    <div key={i} className="text-gray-500 tabular-nums">{s}</div>
-                  ))}
-                  <div className="font-medium text-gray-600">
+                  {awayScores.map((s, i) => {
+                    const won = s > (homeScores[i] ?? 0);
+                    return (
+                      <div key={i} className={`tabular-nums ${won ? 'font-semibold text-gray-800' : 'text-gray-400'}`}>{s}</div>
+                    );
+                  })}
+                  <div className="font-bold tabular-nums text-gray-800">
+                    {meta.data.awayTeam.score}
+                  </div>
+
+                  {/* Home row */}
+                  <div className="font-semibold text-left" style={{ color: homeChartColor }}>
                     {meta.data.homeTeam.abbreviation}
                   </div>
-                  {meta.data.homeTeam.quarterScores.map((s, i) => (
-                    <div key={i} className="text-gray-500 tabular-nums">{s}</div>
-                  ))}
+                  {homeScores.map((s, i) => {
+                    const won = s > (awayScores[i] ?? 0);
+                    return (
+                      <div key={i} className={`tabular-nums ${won ? 'font-semibold text-gray-800' : 'text-gray-400'}`}>{s}</div>
+                    );
+                  })}
+                  <div className="font-bold tabular-nums text-gray-800">
+                    {meta.data.homeTeam.score}
+                  </div>
                 </div>
               );
             })()}
           </div>
 
-          {/* Shot breakdown */}
+          {/* Shooting summary */}
           {shots.data && (
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
               <h3 className="text-sm font-semibold text-gray-700 mb-3">
                 Shooting Summary
               </h3>
-              {[meta.data.awayTeam, meta.data.homeTeam].map((team) => {
-                const teamShots = shots.data!.filter(
-                  (s) => s.teamId === team.teamId
-                );
-                const made = teamShots.filter((s) => s.made).length;
-                const threes = teamShots.filter(
-                  (s) => s.shotType === '3PT Field Goal'
-                );
-                const threesMade = threes.filter((s) => s.made).length;
-                return (
-                  <div key={team.teamId} className="mb-2 last:mb-0">
-                    <div className="text-xs font-medium text-gray-600 mb-1">
-                      {team.abbreviation}
+              <div className="space-y-3">
+                {[
+                  { team: meta.data.awayTeam, color: awayChartColor },
+                  { team: meta.data.homeTeam, color: homeChartColor },
+                ].map(({ team, color }) => {
+                  const teamShots = shots.data!.filter(
+                    (s) => s.teamId === team.teamId
+                  );
+                  const made = teamShots.filter((s) => s.made).length;
+                  const fgPct = teamShots.length > 0 ? (made / teamShots.length) * 100 : 0;
+                  const threes = teamShots.filter(
+                    (s) => s.shotType === '3PT Field Goal'
+                  );
+                  const threesMade = threes.filter((s) => s.made).length;
+                  const threePct = threes.length > 0 ? (threesMade / threes.length) * 100 : 0;
+                  return (
+                    <div key={team.teamId}>
+                      <div className="text-xs font-semibold mb-2" style={{ color }}>
+                        {team.abbreviation}
+                      </div>
+                      {/* FG bar */}
+                      <div className="flex items-center gap-2 mb-1.5">
+                        <span className="text-xs text-gray-500 w-8">FG</span>
+                        <div className="flex-1 h-4 bg-gray-100 rounded overflow-hidden">
+                          <div
+                            className="h-full rounded"
+                            style={{ width: `${fgPct}%`, backgroundColor: color, opacity: 0.6 }}
+                          />
+                        </div>
+                        <span className="text-xs tabular-nums text-gray-600 w-24 text-right">
+                          {made}/{teamShots.length} ({fgPct.toFixed(1)}%)
+                        </span>
+                      </div>
+                      {/* 3PT bar */}
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-gray-500 w-8">3PT</span>
+                        <div className="flex-1 h-4 bg-gray-100 rounded overflow-hidden">
+                          <div
+                            className="h-full rounded"
+                            style={{ width: `${threePct}%`, backgroundColor: color, opacity: 0.6 }}
+                          />
+                        </div>
+                        <span className="text-xs tabular-nums text-gray-600 w-24 text-right">
+                          {threesMade}/{threes.length} ({threePct.toFixed(1)}%)
+                        </span>
+                      </div>
                     </div>
-                    <div className="text-xs text-gray-400 space-x-3">
-                      <span>
-                        FG: {made}/{teamShots.length} (
-                        {teamShots.length > 0
-                          ? ((made / teamShots.length) * 100).toFixed(1)
-                          : 0}
-                        %)
-                      </span>
-                      <span>
-                        3PT: {threesMade}/{threes.length} (
-                        {threes.length > 0
-                          ? ((threesMade / threes.length) * 100).toFixed(1)
-                          : 0}
-                        %)
-                      </span>
-                    </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
+              </div>
             </div>
           )}
         </div>

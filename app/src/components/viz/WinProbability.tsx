@@ -103,8 +103,8 @@ export default function WinProbability({ data, meta }: WinProbabilityProps) {
       >
         <g transform={`translate(${MARGIN.left},${MARGIN.top})`}>
           {/* Area fills */}
-          <path d={areaAbove} fill={homeColors.primary} opacity={0.15} />
-          <path d={areaBelow} fill={awayColors.primary} opacity={0.15} />
+          <path d={areaAbove} fill={homeColors.chart} opacity={0.25} />
+          <path d={areaBelow} fill={awayColors.chart} opacity={0.25} />
 
           {/* Zero line */}
           <line
@@ -184,10 +184,10 @@ export default function WinProbability({ data, meta }: WinProbabilityProps) {
           )}
 
           {/* Team labels on y-axis */}
-          <text x={-8} y={4} textAnchor="end" fill={homeColors.primary} fontSize={9} fontWeight={600}>
+          <text x={-8} y={4} textAnchor="end" fill={homeColors.chart} fontSize={9} fontWeight={600}>
             {meta.homeTeam.abbreviation}
           </text>
-          <text x={-8} y={INNER_H} textAnchor="end" fill={awayColors.primary} fontSize={9} fontWeight={600}>
+          <text x={-8} y={INNER_H} textAnchor="end" fill={awayColors.chart} fontSize={9} fontWeight={600}>
             {meta.awayTeam.abbreviation}
           </text>
 
