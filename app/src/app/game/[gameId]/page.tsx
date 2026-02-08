@@ -98,7 +98,7 @@ export default function GamePage() {
         <div className="space-y-4">
           <div className="bg-white/5 border border-white/10 rounded-lg p-4">
             {scoreMoments && (
-              <WinProbability moments={scoreMoments} meta={meta.data} />
+              <WinProbability data={scoreMoments} meta={meta.data} />
             )}
           </div>
 
@@ -107,30 +107,40 @@ export default function GamePage() {
             <h3 className="text-sm font-semibold text-white/80 mb-3">
               Quarter Scores
             </h3>
-            <div className="grid grid-cols-5 gap-2 text-xs text-center">
-              <div className="text-white/40">Team</div>
-              {['Q1', 'Q2', 'Q3', 'Q4'].map((q) => (
-                <div key={q} className="text-white/40">
-                  {q}
+            {(() => {
+              const maxPeriods = Math.max(
+                meta.data.homeTeam.quarterScores.length,
+                meta.data.awayTeam.quarterScores.length
+              );
+              const headers = Array.from({ length: maxPeriods }, (_, i) =>
+                i < 4 ? `Q${i + 1}` : `OT${i - 3}`
+              );
+              return (
+                <div
+                  className="grid gap-2 text-xs text-center"
+                  style={{
+                    gridTemplateColumns: `60px repeat(${maxPeriods}, 1fr)`,
+                  }}
+                >
+                  <div className="text-white/40">Team</div>
+                  {headers.map((h) => (
+                    <div key={h} className="text-white/40">{h}</div>
+                  ))}
+                  <div className="font-medium text-white/70">
+                    {meta.data.awayTeam.abbreviation}
+                  </div>
+                  {meta.data.awayTeam.quarterScores.map((s, i) => (
+                    <div key={i} className="text-white/60 tabular-nums">{s}</div>
+                  ))}
+                  <div className="font-medium text-white/70">
+                    {meta.data.homeTeam.abbreviation}
+                  </div>
+                  {meta.data.homeTeam.quarterScores.map((s, i) => (
+                    <div key={i} className="text-white/60 tabular-nums">{s}</div>
+                  ))}
                 </div>
-              ))}
-              <div className="font-medium text-white/70">
-                {meta.data.awayTeam.abbreviation}
-              </div>
-              {meta.data.awayTeam.quarterScores.map((s, i) => (
-                <div key={i} className="text-white/60 tabular-nums">
-                  {s}
-                </div>
-              ))}
-              <div className="font-medium text-white/70">
-                {meta.data.homeTeam.abbreviation}
-              </div>
-              {meta.data.homeTeam.quarterScores.map((s, i) => (
-                <div key={i} className="text-white/60 tabular-nums">
-                  {s}
-                </div>
-              ))}
-            </div>
+              );
+            })()}
           </div>
 
           {/* Shot breakdown */}

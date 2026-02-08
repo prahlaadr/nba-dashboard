@@ -2,6 +2,13 @@ import Link from 'next/link';
 
 const GAMES = [
   {
+    id: '0022401102',
+    away: { abbrev: 'MIN', name: 'Timberwolves', score: 140, color: '#236192' },
+    home: { abbrev: 'DEN', name: 'Nuggets', score: 139, color: '#FEC524' },
+    label: 'Jokic 61-PT Triple-Double — 2OT Thriller',
+    date: 'April 1, 2025',
+  },
+  {
     id: '0042300237',
     away: { abbrev: 'MIN', name: 'Timberwolves', score: 98, color: '#236192' },
     home: { abbrev: 'DEN', name: 'Nuggets', score: 90, color: '#FEC524' },

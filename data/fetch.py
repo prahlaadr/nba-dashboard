@@ -39,11 +39,25 @@ def save(data: dict, path: Path) -> None:
         json.dump(data, f, indent=2)
 
 
+def detect_season(game_id: str) -> tuple[str, str]:
+    """Detect season and type from NBA game ID prefix.
+    002 = regular season, 004 = playoffs."""
+    # Game IDs: 00[type][season_year][game_num]
+    # type: 2 = regular, 4 = playoffs
+    prefix = game_id[:3]
+    year_code = game_id[3:5]
+    season_start = 2000 + int(year_code)
+    season = f"{season_start}-{str(season_start + 1)[-2:]}"
+    season_type = "Playoffs" if prefix == "004" else "Regular Season"
+    return season, season_type
+
+
 def fetch_game(game_id: str) -> None:
     out_dir = Path(__file__).parent / "games" / game_id
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    print(f"Fetching game {game_id}...")
+    season, season_type = detect_season(game_id)
+    print(f"Fetching game {game_id} ({season} {season_type})...")
 
     # 1. Box Score Summary → meta.json
     if not (out_dir / "meta.json").exists():
@@ -61,8 +75,8 @@ def fetch_game(game_id: str) -> None:
             game_id_nullable=game_id,
             team_id=0,
             player_id=0,
-            season_nullable="2023-24",
-            season_type_all_star="Playoffs",
+            season_nullable=season,
+            season_type_all_star=season_type,
             context_measure_simple="FGA",
             headers=HEADERS,
         )

@@ -3,11 +3,11 @@
 import { useRef, useMemo, useState } from 'react';
 import * as d3 from 'd3';
 import type { ScoreMoment, GameMeta } from '@/types/nba';
+import type { ScoreProgressionResult } from '@/lib/transformers/winProbability';
 import { getTeamColors } from '@/lib/teamColors';
-import { QUARTERS, GAME_LENGTH_SECONDS } from '@/lib/constants';
 
 interface WinProbabilityProps {
-  moments: ScoreMoment[];
+  data: ScoreProgressionResult;
   meta: GameMeta;
 }
 
@@ -17,12 +17,14 @@ const HEIGHT = 200;
 const INNER_W = WIDTH - MARGIN.left - MARGIN.right;
 const INNER_H = HEIGHT - MARGIN.top - MARGIN.bottom;
 
-export default function WinProbability({ moments, meta }: WinProbabilityProps) {
+export default function WinProbability({ data, meta }: WinProbabilityProps) {
   const svgRef = useRef<SVGSVGElement>(null);
   const [hoverInfo, setHoverInfo] = useState<ScoreMoment | null>(null);
 
   const homeColors = getTeamColors(meta.homeTeam.abbreviation);
   const awayColors = getTeamColors(meta.awayTeam.abbreviation);
+
+  const { moments, totalSeconds, periods } = data;
 
   const { xScale, yScale, areaAbove, areaBelow, linePath } = useMemo(() => {
     const maxDiff = Math.max(
@@ -30,7 +32,7 @@ export default function WinProbability({ moments, meta }: WinProbabilityProps) {
       d3.max(moments, (d) => Math.abs(d.differential)) ?? 10
     );
 
-    const x = d3.scaleLinear().domain([0, GAME_LENGTH_SECONDS]).range([0, INNER_W]);
+    const x = d3.scaleLinear().domain([0, totalSeconds]).range([0, INNER_W]);
     const y = d3
       .scaleLinear()
       .domain([-maxDiff - 2, maxDiff + 2])
@@ -63,16 +65,15 @@ export default function WinProbability({ moments, meta }: WinProbabilityProps) {
       areaBelow: areaNeg(moments) ?? '',
       linePath: line(moments) ?? '',
     };
-  }, [moments]);
+  }, [moments, totalSeconds]);
 
   const handleMouseMove = (e: React.MouseEvent<SVGRectElement>) => {
     const svg = svgRef.current;
     if (!svg) return;
     const rect = svg.getBoundingClientRect();
-    const mouseX = e.clientX - rect.left - MARGIN.left;
-    const gameSeconds = xScale.invert(mouseX * (WIDTH / rect.width));
+    const mouseX = ((e.clientX - rect.left) / rect.width) * WIDTH - MARGIN.left;
+    const gameSeconds = xScale.invert(mouseX);
 
-    // Find closest moment
     let closest = moments[0];
     for (const m of moments) {
       if (m.gameSeconds <= gameSeconds) closest = m;
@@ -116,13 +117,13 @@ export default function WinProbability({ moments, meta }: WinProbabilityProps) {
             strokeDasharray="4 4"
           />
 
-          {/* Quarter boundaries */}
-          {QUARTERS.slice(1).map((q) => (
+          {/* Period boundaries */}
+          {periods.slice(1).map((p) => (
             <line
-              key={q.label}
-              x1={xScale(q.startSeconds)}
+              key={p.label}
+              x1={xScale(p.startSeconds)}
               y1={0}
-              x2={xScale(q.startSeconds)}
+              x2={xScale(p.startSeconds)}
               y2={INNER_H}
               stroke="white"
               strokeOpacity={0.15}
@@ -130,16 +131,16 @@ export default function WinProbability({ moments, meta }: WinProbabilityProps) {
             />
           ))}
 
-          {/* Quarter labels */}
-          {QUARTERS.map((q, i) => {
+          {/* Period labels */}
+          {periods.map((p, i) => {
             const nextStart =
-              i < QUARTERS.length - 1
-                ? QUARTERS[i + 1].startSeconds
-                : GAME_LENGTH_SECONDS;
-            const midX = xScale((q.startSeconds + nextStart) / 2);
+              i < periods.length - 1
+                ? periods[i + 1].startSeconds
+                : totalSeconds;
+            const midX = xScale((p.startSeconds + nextStart) / 2);
             return (
               <text
-                key={q.label}
+                key={p.label}
                 x={midX}
                 y={INNER_H + 20}
                 textAnchor="middle"
@@ -147,7 +148,7 @@ export default function WinProbability({ moments, meta }: WinProbabilityProps) {
                 fillOpacity={0.4}
                 fontSize={10}
               >
-                {q.label}
+                {p.label}
               </text>
             );
           })}
@@ -182,11 +183,6 @@ export default function WinProbability({ moments, meta }: WinProbabilityProps) {
               />
             </>
           )}
-
-          {/* Y-axis labels */}
-          <text x={-8} y={yScale(0)} textAnchor="end" fill="white" fillOpacity={0.4} fontSize={9} dy={3}>
-            0
-          </text>
 
           {/* Team labels on y-axis */}
           <text x={-8} y={4} textAnchor="end" fill={homeColors.primary} fontSize={9} fontWeight={600}>

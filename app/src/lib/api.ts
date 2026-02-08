@@ -42,20 +42,28 @@ export function parseMeta(response: NbaResponse): GameMeta {
     (ls) => ls.TEAM_ID === summary.VISITOR_TEAM_ID
   ) as Record<string, unknown>;
 
-  const makeTeam = (ls: Record<string, unknown>) => ({
-    teamId: ls.TEAM_ID as number,
-    abbreviation: ls.TEAM_ABBREVIATION as string,
-    city: ls.TEAM_CITY_NAME as string,
-    nickname: ls.TEAM_NICKNAME as string,
-    score: ls.PTS as number,
-    record: ls.TEAM_WINS_LOSSES as string,
-    quarterScores: [
+  const makeTeam = (ls: Record<string, unknown>) => {
+    const qScores = [
       ls.PTS_QTR1 as number,
       ls.PTS_QTR2 as number,
       ls.PTS_QTR3 as number,
       ls.PTS_QTR4 as number,
-    ],
-  });
+    ];
+    // Add OT periods if they exist
+    for (let i = 1; i <= 10; i++) {
+      const otPts = ls[`PTS_OT${i}`] as number;
+      if (otPts && otPts > 0) qScores.push(otPts);
+    }
+    return {
+      teamId: ls.TEAM_ID as number,
+      abbreviation: ls.TEAM_ABBREVIATION as string,
+      city: ls.TEAM_CITY_NAME as string,
+      nickname: ls.TEAM_NICKNAME as string,
+      score: ls.PTS as number,
+      record: ls.TEAM_WINS_LOSSES as string,
+      quarterScores: qScores,
+    };
+  };
 
   return {
     gameId: summary.GAME_ID as string,

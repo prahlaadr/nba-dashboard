@@ -61,4 +61,6 @@ export const QUARTERS = [
   { label: 'Q4', startSeconds: 2160 },
 ] as const;
 
-export const GAME_LENGTH_SECONDS = 2880; // 4 quarters × 12 min × 60 sec
+export const REGULATION_SECONDS = 2880; // 4 quarters × 12 min × 60 sec
+export const OT_SECONDS = 300; // 5 min overtime
+export const GAME_LENGTH_SECONDS = 2880; // default, actual length depends on OT
