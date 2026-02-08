@@ -8,6 +8,11 @@ import type { PbpAction, AssistGraph, AssistNode, AssistLink } from '@/types/nba
  *
  * We extract scorer (playerName) and assister from description.
  */
+// Strip diacriticals so "Jokić" and "Jokic" merge into one node
+function normalize(name: string): string {
+  return name.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+}
+
 export function transformAssistNetwork(
   actions: PbpAction[],
   homeTeamId: number,
@@ -23,8 +28,8 @@ export function transformAssistNetwork(
     const match = action.description.match(assistRegex);
     if (!match) continue;
 
-    const assisterLastName = match[1];
-    const scorerLastName = action.playerName;
+    const assisterLastName = normalize(match[1]);
+    const scorerLastName = normalize(action.playerName);
     const teamId = action.teamId;
 
     links.push({ scorer: scorerLastName, assister: assisterLastName, teamId });
