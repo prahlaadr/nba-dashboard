@@ -24,13 +24,42 @@ function parseResultSet(response: NbaResponse, name: string) {
   });
 }
 
+const SUM_FIELDS = [
+  'FGM', 'FGA', 'FG3M', 'FG3A', 'FTM', 'FTA',
+  'OREB', 'DREB', 'REB', 'AST', 'STL', 'BLK', 'TO', 'PF', 'PTS',
+];
+
+/** Aggregate PlayerStats into team totals when TeamStats is missing (CDN games) */
+function aggregateTeamStats(players: Record<string, unknown>[]): Record<string, unknown>[] {
+  const byTeam = new Map<number, Record<string, number>>();
+  for (const p of players) {
+    const tid = p.TEAM_ID as number;
+    if (!byTeam.has(tid)) {
+      const team: Record<string, number> = { TEAM_ID: tid };
+      for (const f of SUM_FIELDS) team[f] = 0;
+      byTeam.set(tid, team);
+    }
+    const team = byTeam.get(tid)!;
+    for (const f of SUM_FIELDS) team[f] += (p[f] as number) || 0;
+  }
+  for (const team of byTeam.values()) {
+    team.FG_PCT = team.FGA > 0 ? team.FGM / team.FGA : 0;
+    team.FG3_PCT = team.FG3A > 0 ? team.FG3M / team.FG3A : 0;
+    team.FT_PCT = team.FTA > 0 ? team.FTM / team.FTA : 0;
+  }
+  return [...byTeam.values()];
+}
+
 export function transformMatchStats(
   boxscoreRaw: NbaResponse,
   metaRaw: NbaResponse,
   homeTeamId: number,
   awayTeamId: number
 ): StatGroup[] {
-  const teamStats = parseResultSet(boxscoreRaw, 'TeamStats');
+  let teamStats = parseResultSet(boxscoreRaw, 'TeamStats');
+  if (teamStats.length === 0) {
+    teamStats = aggregateTeamStats(parseResultSet(boxscoreRaw, 'PlayerStats'));
+  }
   const otherStats = parseResultSet(metaRaw, 'OtherStats');
 
   const home = teamStats.find((t) => t.TEAM_ID === homeTeamId) as Record<string, number>;
