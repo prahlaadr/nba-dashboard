@@ -8,11 +8,9 @@ import { useDashboardStore } from '@/store/dashboardStore';
 import GameHeader from '@/components/match/GameHeader';
 import TabNav from '@/components/match/TabNav';
 import ShotChart from '@/components/court/ShotChart';
-import AssistNetwork from '@/components/viz/AssistNetwork';
 import PlayerImpact from '@/components/viz/PlayerImpact';
 import MatchStats from '@/components/viz/MatchStats';
 import WinProbability from '@/components/viz/WinProbability';
-import { transformAssistNetwork } from '@/lib/transformers/assistNetwork';
 import { transformScoreProgression } from '@/lib/transformers/winProbability';
 import { transformPlayerImpact } from '@/lib/transformers/playerImpact';
 import { transformMatchStats } from '@/lib/transformers/matchStats';
@@ -25,15 +23,6 @@ export default function GamePage() {
 
   const { meta, metaRaw, shots, playByPlay, boxScore, boxscoreRaw, isLoading, isError } =
     useGameData(gameId);
-
-  const assistData = useMemo(() => {
-    if (!playByPlay.data || !meta.data) return null;
-    return transformAssistNetwork(
-      playByPlay.data.game.actions,
-      meta.data.homeTeam.teamId,
-      meta.data.awayTeam.teamId
-    );
-  }, [playByPlay.data, meta.data]);
 
   const scoreMoments = useMemo(() => {
     if (!playByPlay.data) return null;
@@ -95,16 +84,7 @@ export default function GamePage() {
 
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
             {activeTab === 'shots' && shots.data && (
-              <ShotChart shots={shots.data} meta={meta.data} />
-            )}
-
-            {activeTab === 'assists' && assistData && (
-              <AssistNetwork
-                home={assistData.home}
-                away={assistData.away}
-                homeTeamAbbrev={meta.data.homeTeam.abbreviation}
-                awayTeamAbbrev={meta.data.awayTeam.abbreviation}
-              />
+              <ShotChart shots={shots.data} meta={meta.data} boxScore={boxScore.data ?? []} />
             )}
 
             {activeTab === 'impact' && impactData && (

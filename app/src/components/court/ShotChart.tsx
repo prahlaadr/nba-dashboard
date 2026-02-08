@@ -1,14 +1,15 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import Court from './Court';
-import type { ShotEvent, GameMeta } from '@/types/nba';
+import type { ShotEvent, GameMeta, PlayerBoxScore } from '@/types/nba';
 import { getTeamColors } from '@/lib/teamColors';
 import { useDashboardStore } from '@/store/dashboardStore';
 
 interface ShotChartProps {
   shots: ShotEvent[];
   meta: GameMeta;
+  boxScore: PlayerBoxScore[];
 }
 
 interface Tooltip {
@@ -17,17 +18,37 @@ interface Tooltip {
   shot: ShotEvent;
 }
 
-export default function ShotChart({ shots, meta }: ShotChartProps) {
+export default function ShotChart({ shots, meta, boxScore }: ShotChartProps) {
   const [tooltip, setTooltip] = useState<Tooltip | null>(null);
+  const [selectedPlayer, setSelectedPlayer] = useState<string | null>(null);
   const { teamFilter, setTeamFilter } = useDashboardStore();
 
   const homeColors = getTeamColors(meta.homeTeam.abbreviation);
   const awayColors = getTeamColors(meta.awayTeam.abbreviation);
 
-  const filtered = useMemo(
+  useEffect(() => setSelectedPlayer(null), [teamFilter]);
+
+  const teamFiltered = useMemo(
     () => (teamFilter ? shots.filter((s) => s.teamId === teamFilter) : shots),
     [shots, teamFilter]
   );
+
+  const filtered = useMemo(
+    () => selectedPlayer ? teamFiltered.filter((s) => s.playerName === selectedPlayer) : teamFiltered,
+    [teamFiltered, selectedPlayer]
+  );
+
+  // Players for the selected team, sorted by shot count descending
+  const teamPlayers = useMemo(() => {
+    if (!teamFilter) return [];
+    const counts = new Map<string, number>();
+    for (const s of teamFiltered) {
+      counts.set(s.playerName, (counts.get(s.playerName) ?? 0) + 1);
+    }
+    return Array.from(counts.entries())
+      .sort((a, b) => b[1] - a[1])
+      .map(([name]) => name);
+  }, [teamFiltered, teamFilter]);
 
   const chartColorMap = useMemo(
     () => ({
@@ -207,6 +228,60 @@ export default function ShotChart({ shots, meta }: ShotChartProps) {
           </div>
         )}
       </div>
+
+      {/* Player filter chips */}
+      {teamFilter && teamPlayers.length > 0 && (
+        <div className="flex flex-wrap gap-1.5 mt-3">
+          {teamPlayers.map((name) => {
+            const active = selectedPlayer === name;
+            const color = teamFilter === meta.homeTeam.teamId ? homeColors.chart : awayColors.chart;
+            return (
+              <button
+                key={name}
+                onClick={() => setSelectedPlayer(active ? null : name)}
+                className="px-2.5 py-1 rounded-full text-xs font-medium transition-colors"
+                style={{
+                  backgroundColor: active ? color : '#f3f4f6',
+                  color: active ? '#fff' : '#6b7280',
+                }}
+              >
+                {name}
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Selected player stats */}
+      {selectedPlayer && (() => {
+        const p = boxScore.find((b) => b.playerName === selectedPlayer);
+        if (!p) return null;
+        const color = teamFilter === meta.homeTeam.teamId ? homeColors.chart : awayColors.chart;
+        const stats = [
+          { label: 'PTS', value: p.pts },
+          { label: 'REB', value: p.reb },
+          { label: 'AST', value: p.ast },
+          { label: 'FG', value: `${p.fgm}/${p.fga}` },
+          { label: '3PT', value: `${p.fg3m}/${p.fg3a}` },
+          { label: 'FT', value: `${p.ftm}/${p.fta}` },
+          { label: 'STL', value: p.stl },
+          { label: 'BLK', value: p.blk },
+          { label: 'TO', value: p.to },
+          { label: '+/-', value: p.plusMinus > 0 ? `+${p.plusMinus}` : p.plusMinus },
+          { label: 'MIN', value: p.minutes },
+        ];
+        return (
+          <div className="mt-3 flex items-center gap-4 flex-wrap">
+            <span className="text-sm font-semibold" style={{ color }}>{selectedPlayer}</span>
+            {stats.map((s) => (
+              <div key={s.label} className="text-center">
+                <div className="text-xs text-gray-400">{s.label}</div>
+                <div className="text-sm font-semibold tabular-nums text-gray-700">{s.value}</div>
+              </div>
+            ))}
+          </div>
+        );
+      })()}
     </div>
   );
 }

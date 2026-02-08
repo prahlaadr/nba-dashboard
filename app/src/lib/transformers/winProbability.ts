@@ -54,10 +54,13 @@ export function transformScoreProgression(actions: PbpAction[]): ScoreProgressio
   let maxPeriod = 4;
 
   for (const action of actions) {
+    if (action.period > maxPeriod) maxPeriod = action.period;
+
+    // Skip actions with no score data (timeouts, fouls, etc.)
+    if (!action.scoreHome && !action.scoreAway) continue;
+
     const home = parseInt(action.scoreHome) || 0;
     const away = parseInt(action.scoreAway) || 0;
-
-    if (action.period > maxPeriod) maxPeriod = action.period;
 
     // Only record when score changes
     if (home === lastHome && away === lastAway) continue;

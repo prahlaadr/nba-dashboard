@@ -94,17 +94,6 @@ function NetworkGraph({
       .attr('stroke-opacity', 0.3)
       .attr('stroke-width', (d: any) => linkScale(d.value));
 
-    // Edge labels — show count on edges with value >= 2
-    const edgeLabel = g
-      .selectAll('.edge-label')
-      .data(simLinks.filter((d: any) => d.value >= 2))
-      .join('text')
-      .attr('class', 'edge-label')
-      .attr('text-anchor', 'middle')
-      .attr('fill', '#9ca3af')
-      .attr('font-size', '8px')
-      .text((d: any) => d.value);
-
     // Nodes — filled with team chart color
     const node = g
       .selectAll('.node')
@@ -154,9 +143,6 @@ function NetworkGraph({
       .attr('y1', (d: any) => d.source.y)
       .attr('x2', (d: any) => d.target.x)
       .attr('y2', (d: any) => d.target.y);
-    edgeLabel
-      .attr('x', (d: any) => (d.source.x + d.target.x) / 2)
-      .attr('y', (d: any) => (d.source.y + d.target.y) / 2 - 4);
     node.attr('cx', (d: any) => d.x).attr('cy', (d: any) => d.y);
     countLabel.attr('x', (d: any) => d.x).attr('y', (d: any) => d.y);
     label.attr('x', (d: any) => d.x).attr('y', (d: any) => d.y);

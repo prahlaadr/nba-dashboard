@@ -11,9 +11,9 @@ interface WinProbabilityProps {
   meta: GameMeta;
 }
 
-const MARGIN = { top: 20, right: 20, bottom: 30, left: 40 };
+const MARGIN = { top: 24, right: 16, bottom: 32, left: 44 };
 const WIDTH = 500;
-const HEIGHT = 200;
+const HEIGHT = 280;
 const INNER_W = WIDTH - MARGIN.left - MARGIN.right;
 const INNER_H = HEIGHT - MARGIN.top - MARGIN.bottom;
 
@@ -82,20 +82,49 @@ export default function WinProbability({ data, meta }: WinProbabilityProps) {
     setHoverInfo(closest);
   };
 
+  // Format hover info with team colors
+  const hoverAway = hoverInfo ? hoverInfo.scoreAway : 0;
+  const hoverHome = hoverInfo ? hoverInfo.scoreHome : 0;
+  const hoverDiff = hoverInfo ? hoverInfo.differential : 0;
+  const leadingColor = hoverDiff > 0 ? homeColors.chart : hoverDiff < 0 ? awayColors.chart : '#6b7280';
+  const leadingTeam = hoverDiff > 0 ? meta.homeTeam.abbreviation : hoverDiff < 0 ? meta.awayTeam.abbreviation : '';
+
   return (
     <div>
-      <div className="flex items-center justify-between mb-2">
-        <h3 className="text-sm font-semibold text-gray-700">Score Differential</h3>
+      <div className="flex items-center justify-between mb-1">
+        <h3 className="text-sm font-semibold text-gray-700">Score Timeline</h3>
+        <div className="flex items-center gap-3 text-xs">
+          <span className="flex items-center gap-1">
+            <span className="inline-block w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: homeColors.chart, opacity: 0.5 }} />
+            <span className="text-gray-500">{meta.homeTeam.abbreviation} leads</span>
+          </span>
+          <span className="flex items-center gap-1">
+            <span className="inline-block w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: awayColors.chart, opacity: 0.5 }} />
+            <span className="text-gray-500">{meta.awayTeam.abbreviation} leads</span>
+          </span>
+        </div>
+      </div>
+
+      {/* Hover score display */}
+      <div className="h-5 mb-1">
         {hoverInfo && (
-          <div className="text-xs text-gray-500">
-            {meta.awayTeam.abbreviation} {hoverInfo.scoreAway} - {hoverInfo.scoreHome} {meta.homeTeam.abbreviation}
-            <span className="ml-2 text-gray-400">
-              ({hoverInfo.differential > 0 ? '+' : ''}
-              {hoverInfo.differential} {meta.homeTeam.abbreviation})
+          <div className="flex items-center gap-2 text-xs">
+            <span className="font-semibold tabular-nums" style={{ color: awayColors.chart }}>
+              {meta.awayTeam.abbreviation} {hoverAway}
             </span>
+            <span className="text-gray-300">-</span>
+            <span className="font-semibold tabular-nums" style={{ color: homeColors.chart }}>
+              {hoverHome} {meta.homeTeam.abbreviation}
+            </span>
+            {hoverDiff !== 0 && (
+              <span className="font-medium" style={{ color: leadingColor }}>
+                {leadingTeam} +{Math.abs(hoverDiff)}
+              </span>
+            )}
           </div>
         )}
       </div>
+
       <svg
         ref={svgRef}
         viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
@@ -103,8 +132,8 @@ export default function WinProbability({ data, meta }: WinProbabilityProps) {
       >
         <g transform={`translate(${MARGIN.left},${MARGIN.top})`}>
           {/* Area fills */}
-          <path d={areaAbove} fill={homeColors.chart} opacity={0.25} />
-          <path d={areaBelow} fill={awayColors.chart} opacity={0.25} />
+          <path d={areaAbove} fill={homeColors.chart} opacity={0.2} />
+          <path d={areaBelow} fill={awayColors.chart} opacity={0.2} />
 
           {/* Zero line */}
           <line
@@ -113,7 +142,7 @@ export default function WinProbability({ data, meta }: WinProbabilityProps) {
             x2={INNER_W}
             y2={yScale(0)}
             stroke="#94a3b8"
-            strokeOpacity={0.4}
+            strokeOpacity={0.5}
             strokeDasharray="4 4"
           />
 
@@ -125,9 +154,8 @@ export default function WinProbability({ data, meta }: WinProbabilityProps) {
               y1={0}
               x2={xScale(p.startSeconds)}
               y2={INNER_H}
-              stroke="#cbd5e1"
-              strokeOpacity={0.6}
-              strokeDasharray="4 4"
+              stroke="#e2e8f0"
+              strokeWidth={1}
             />
           ))}
 
@@ -145,20 +173,46 @@ export default function WinProbability({ data, meta }: WinProbabilityProps) {
                 y={INNER_H + 20}
                 textAnchor="middle"
                 fill="#94a3b8"
-                fontSize={10}
+                fontSize={11}
+                fontWeight={500}
               >
                 {p.label}
               </text>
             );
           })}
 
+          {/* Y-axis tick labels */}
+          {yScale.ticks(5).map((tick) => (
+            <g key={tick}>
+              <line
+                x1={0}
+                y1={yScale(tick)}
+                x2={INNER_W}
+                y2={yScale(tick)}
+                stroke="#f1f5f9"
+                strokeWidth={tick === 0 ? 0 : 1}
+              />
+              {tick !== 0 && (
+                <text
+                  x={-8}
+                  y={yScale(tick)}
+                  textAnchor="end"
+                  fill="#cbd5e1"
+                  fontSize={9}
+                  dy="0.35em"
+                >
+                  {tick > 0 ? `+${tick}` : tick}
+                </text>
+              )}
+            </g>
+          ))}
+
           {/* Score differential line */}
           <path
             d={linePath}
             fill="none"
-            stroke="#1e293b"
+            stroke="#334155"
             strokeWidth={1.5}
-            strokeOpacity={0.7}
           />
 
           {/* Hover crosshair */}
@@ -170,24 +224,25 @@ export default function WinProbability({ data, meta }: WinProbabilityProps) {
                 x2={xScale(hoverInfo.gameSeconds)}
                 y2={INNER_H}
                 stroke="#64748b"
-                strokeOpacity={0.5}
+                strokeOpacity={0.4}
                 strokeWidth={1}
               />
               <circle
                 cx={xScale(hoverInfo.gameSeconds)}
                 cy={yScale(hoverInfo.differential)}
                 r={4}
-                fill="#1e293b"
-                stroke="none"
+                fill={hoverDiff >= 0 ? homeColors.chart : awayColors.chart}
+                stroke="#fff"
+                strokeWidth={2}
               />
             </>
           )}
 
           {/* Team labels on y-axis */}
-          <text x={-8} y={4} textAnchor="end" fill={homeColors.chart} fontSize={9} fontWeight={600}>
+          <text x={-8} y={8} textAnchor="end" fill={homeColors.chart} fontSize={10} fontWeight={700}>
             {meta.homeTeam.abbreviation}
           </text>
-          <text x={-8} y={INNER_H} textAnchor="end" fill={awayColors.chart} fontSize={9} fontWeight={600}>
+          <text x={-8} y={INNER_H - 2} textAnchor="end" fill={awayColors.chart} fontSize={10} fontWeight={700}>
             {meta.awayTeam.abbreviation}
           </text>
 
