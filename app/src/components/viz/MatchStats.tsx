@@ -25,7 +25,6 @@ function StatBar({
 }) {
   const maxVal = Math.max(row.away, row.home, 1);
 
-  // Bar widths as percentage of the half (each side is 50%)
   const awayPct = (row.away / maxVal) * 100;
   const homePct = (row.home / maxVal) * 100;
 
@@ -36,14 +35,14 @@ function StatBar({
   return (
     <div className="mb-4">
       {/* Label centered */}
-      <div className="text-center text-xs text-white/50 mb-1.5">{row.label}</div>
+      <div className="text-center text-xs text-gray-400 mb-1.5">{row.label}</div>
 
       {/* Values + bars */}
       <div className="flex items-center gap-2">
         {/* Away value */}
         <span
           className="w-12 text-right text-sm tabular-nums font-semibold"
-          style={{ color: awayLeads || tied ? awayColor : 'rgba(255,255,255,0.35)' }}
+          style={{ color: awayLeads || tied ? awayColor : '#d1d5db' }}
         >
           {formatValue(row.away, row.format)}
         </span>
@@ -56,7 +55,7 @@ function StatBar({
               className="h-full rounded-l-sm transition-all duration-300"
               style={{
                 width: `${awayPct}%`,
-                backgroundColor: awayLeads || tied ? awayColor : 'rgba(255,255,255,0.15)',
+                backgroundColor: awayLeads || tied ? awayColor : '#e5e7eb',
               }}
             />
           </div>
@@ -67,7 +66,7 @@ function StatBar({
               className="h-full rounded-r-sm transition-all duration-300"
               style={{
                 width: `${homePct}%`,
-                backgroundColor: homeLeads || tied ? homeColor : 'rgba(255,255,255,0.15)',
+                backgroundColor: homeLeads || tied ? homeColor : '#e5e7eb',
               }}
             />
           </div>
@@ -76,7 +75,7 @@ function StatBar({
         {/* Home value */}
         <span
           className="w-12 text-left text-sm tabular-nums font-semibold"
-          style={{ color: homeLeads || tied ? homeColor : 'rgba(255,255,255,0.35)' }}
+          style={{ color: homeLeads || tied ? homeColor : '#d1d5db' }}
         >
           {formatValue(row.home, row.format)}
         </span>
@@ -89,7 +88,6 @@ export default function MatchStats({ groups, meta }: MatchStatsProps) {
   const awayColors = getTeamColors(meta.awayTeam.abbreviation);
   const homeColors = getTeamColors(meta.homeTeam.abbreviation);
 
-  // Use chart colors for bar fills
   const awayColor = awayColors.chart;
   const homeColor = homeColors.chart;
 
@@ -107,7 +105,7 @@ export default function MatchStats({ groups, meta }: MatchStatsProps) {
 
       {groups.map((group) => (
         <div key={group.title} className="mb-5">
-          <div className="text-[10px] font-semibold uppercase tracking-widest text-white/30 mb-3">
+          <div className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 mb-3">
             {group.title}
           </div>
           {group.rows.map((row) => (

@@ -48,8 +48,8 @@ export default function ShotChart({ shots, meta }: ShotChartProps) {
           onClick={() => setTeamFilter(null)}
           className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
             teamFilter === null
-              ? 'bg-white/20 text-white'
-              : 'bg-white/5 text-white/50 hover:text-white/80'
+              ? 'bg-gray-200 text-gray-900'
+              : 'bg-gray-100 text-gray-500 hover:text-gray-700'
           }`}
         >
           Both
@@ -61,11 +61,11 @@ export default function ShotChart({ shots, meta }: ShotChartProps) {
             backgroundColor:
               teamFilter === meta.awayTeam.teamId
                 ? awayColors.primary
-                : 'rgba(255,255,255,0.05)',
+                : '#f3f4f6',
             color:
               teamFilter === meta.awayTeam.teamId
                 ? '#fff'
-                : 'rgba(255,255,255,0.5)',
+                : '#6b7280',
           }}
         >
           {meta.awayTeam.abbreviation}
@@ -77,18 +77,18 @@ export default function ShotChart({ shots, meta }: ShotChartProps) {
             backgroundColor:
               teamFilter === meta.homeTeam.teamId
                 ? homeColors.primary
-                : 'rgba(255,255,255,0.05)',
+                : '#f3f4f6',
             color:
               teamFilter === meta.homeTeam.teamId
                 ? '#fff'
-                : 'rgba(255,255,255,0.5)',
+                : '#6b7280',
           }}
         >
           {meta.homeTeam.abbreviation}
         </button>
 
         {/* Legend */}
-        <div className="flex items-center gap-3 ml-auto text-xs text-white/40">
+        <div className="flex items-center gap-3 ml-auto text-xs text-gray-400">
           <span className="flex items-center gap-1">
             <svg width="10" height="10">
               <circle cx="5" cy="5" r="4" fill="#888" />
@@ -102,7 +102,7 @@ export default function ShotChart({ shots, meta }: ShotChartProps) {
             </svg>
             Missed
           </span>
-          <span>
+          <span className="text-gray-500 font-medium">
             {madeCount}/{totalCount} FG (
             {totalCount > 0
               ? ((madeCount / totalCount) * 100).toFixed(1)
@@ -127,7 +127,6 @@ export default function ShotChart({ shots, meta }: ShotChartProps) {
                   const r = 5;
 
                   if (shot.made) {
-                    // Made shot: filled circle with glow
                     return (
                       <circle
                         key={shot.gameEventId}
@@ -187,19 +186,19 @@ export default function ShotChart({ shots, meta }: ShotChartProps) {
         {/* Tooltip */}
         {tooltip && (
           <div
-            className="absolute pointer-events-none bg-slate-900/95 border border-white/20 rounded px-3 py-2 text-xs text-white z-10 min-w-[160px]"
+            className="absolute pointer-events-none bg-white border border-gray-200 rounded-lg px-3 py-2 text-xs text-gray-900 z-10 min-w-[160px] shadow-lg"
             style={{
               left: `${((tooltip.x + 15) / 520) * 100}%`,
               top: `${((tooltip.y - 45) / 490) * 100}%`,
             }}
           >
             <div className="font-semibold">{tooltip.shot.playerName}</div>
-            <div className="text-white/60">{tooltip.shot.actionType}</div>
-            <div className="text-white/60">
+            <div className="text-gray-500">{tooltip.shot.actionType}</div>
+            <div className="text-gray-500">
               {tooltip.shot.shotDistance}ft —{' '}
               <span
                 className={
-                  tooltip.shot.made ? 'text-green-400' : 'text-red-400'
+                  tooltip.shot.made ? 'text-green-600' : 'text-red-500'
                 }
               >
                 {tooltip.shot.made ? 'Made' : 'Missed'}

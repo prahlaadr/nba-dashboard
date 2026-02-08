@@ -13,15 +13,15 @@ export default function TabNav() {
   const { activeTab, setActiveTab } = useDashboardStore();
 
   return (
-    <div className="flex gap-1 bg-white/5 rounded-lg p-1">
+    <div className="flex gap-1 bg-gray-100 rounded-lg p-1">
       {TABS.map((tab) => (
         <button
           key={tab.id}
           onClick={() => setActiveTab(tab.id)}
           className={`flex-1 px-4 py-2 rounded-md text-sm font-medium transition-all ${
             activeTab === tab.id
-              ? 'bg-white/15 text-white shadow-sm'
-              : 'text-white/50 hover:text-white/80 hover:bg-white/5'
+              ? 'bg-white text-gray-900 shadow-sm'
+              : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
           }`}
         >
           {tab.label}

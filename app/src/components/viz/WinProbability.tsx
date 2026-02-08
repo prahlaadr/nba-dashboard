@@ -85,11 +85,11 @@ export default function WinProbability({ data, meta }: WinProbabilityProps) {
   return (
     <div>
       <div className="flex items-center justify-between mb-2">
-        <h3 className="text-sm font-semibold text-white/80">Score Differential</h3>
+        <h3 className="text-sm font-semibold text-gray-700">Score Differential</h3>
         {hoverInfo && (
-          <div className="text-xs text-white/60">
+          <div className="text-xs text-gray-500">
             {meta.awayTeam.abbreviation} {hoverInfo.scoreAway} - {hoverInfo.scoreHome} {meta.homeTeam.abbreviation}
-            <span className="ml-2 text-white/40">
+            <span className="ml-2 text-gray-400">
               ({hoverInfo.differential > 0 ? '+' : ''}
               {hoverInfo.differential} {meta.homeTeam.abbreviation})
             </span>
@@ -103,8 +103,8 @@ export default function WinProbability({ data, meta }: WinProbabilityProps) {
       >
         <g transform={`translate(${MARGIN.left},${MARGIN.top})`}>
           {/* Area fills */}
-          <path d={areaAbove} fill={homeColors.primary} opacity={0.2} />
-          <path d={areaBelow} fill={awayColors.primary} opacity={0.2} />
+          <path d={areaAbove} fill={homeColors.primary} opacity={0.15} />
+          <path d={areaBelow} fill={awayColors.primary} opacity={0.15} />
 
           {/* Zero line */}
           <line
@@ -112,8 +112,8 @@ export default function WinProbability({ data, meta }: WinProbabilityProps) {
             y1={yScale(0)}
             x2={INNER_W}
             y2={yScale(0)}
-            stroke="white"
-            strokeOpacity={0.2}
+            stroke="#94a3b8"
+            strokeOpacity={0.4}
             strokeDasharray="4 4"
           />
 
@@ -125,8 +125,8 @@ export default function WinProbability({ data, meta }: WinProbabilityProps) {
               y1={0}
               x2={xScale(p.startSeconds)}
               y2={INNER_H}
-              stroke="white"
-              strokeOpacity={0.15}
+              stroke="#cbd5e1"
+              strokeOpacity={0.6}
               strokeDasharray="4 4"
             />
           ))}
@@ -144,8 +144,7 @@ export default function WinProbability({ data, meta }: WinProbabilityProps) {
                 x={midX}
                 y={INNER_H + 20}
                 textAnchor="middle"
-                fill="white"
-                fillOpacity={0.4}
+                fill="#94a3b8"
                 fontSize={10}
               >
                 {p.label}
@@ -157,9 +156,9 @@ export default function WinProbability({ data, meta }: WinProbabilityProps) {
           <path
             d={linePath}
             fill="none"
-            stroke="white"
+            stroke="#1e293b"
             strokeWidth={1.5}
-            strokeOpacity={0.8}
+            strokeOpacity={0.7}
           />
 
           {/* Hover crosshair */}
@@ -170,7 +169,7 @@ export default function WinProbability({ data, meta }: WinProbabilityProps) {
                 y1={0}
                 x2={xScale(hoverInfo.gameSeconds)}
                 y2={INNER_H}
-                stroke="white"
+                stroke="#64748b"
                 strokeOpacity={0.5}
                 strokeWidth={1}
               />
@@ -178,7 +177,7 @@ export default function WinProbability({ data, meta }: WinProbabilityProps) {
                 cx={xScale(hoverInfo.gameSeconds)}
                 cy={yScale(hoverInfo.differential)}
                 r={4}
-                fill="white"
+                fill="#1e293b"
                 stroke="none"
               />
             </>

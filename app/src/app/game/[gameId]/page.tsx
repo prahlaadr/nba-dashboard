@@ -61,7 +61,7 @@ export default function GamePage() {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-white/50 text-lg">Loading game data...</div>
+        <div className="text-gray-400 text-lg">Loading game data...</div>
       </div>
     );
   }
@@ -69,7 +69,7 @@ export default function GamePage() {
   if (isError || !meta.data) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="text-red-400 text-lg">Failed to load game data</div>
+        <div className="text-red-500 text-lg">Failed to load game data</div>
       </div>
     );
   }
@@ -78,7 +78,7 @@ export default function GamePage() {
     <div className="max-w-7xl mx-auto px-4 py-6 space-y-6">
       <Link
         href="/"
-        className="inline-block text-sm text-white/40 hover:text-white/70 transition-colors mb-2"
+        className="inline-block text-sm text-gray-400 hover:text-gray-600 transition-colors mb-2"
       >
         ← All Games
       </Link>
@@ -89,7 +89,7 @@ export default function GamePage() {
         <div className="lg:col-span-2 space-y-4">
           <TabNav />
 
-          <div className="bg-white/5 border border-white/10 rounded-lg p-4">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
             {activeTab === 'shots' && shots.data && (
               <ShotChart shots={shots.data} meta={meta.data} />
             )}
@@ -119,15 +119,15 @@ export default function GamePage() {
 
         {/* Right column — Win probability + quick stats */}
         <div className="space-y-4">
-          <div className="bg-white/5 border border-white/10 rounded-lg p-4">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
             {scoreMoments && (
               <WinProbability data={scoreMoments} meta={meta.data} />
             )}
           </div>
 
           {/* Quick stats */}
-          <div className="bg-white/5 border border-white/10 rounded-lg p-4">
-            <h3 className="text-sm font-semibold text-white/80 mb-3">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+            <h3 className="text-sm font-semibold text-gray-700 mb-3">
               Quarter Scores
             </h3>
             {(() => {
@@ -145,21 +145,21 @@ export default function GamePage() {
                     gridTemplateColumns: `60px repeat(${maxPeriods}, 1fr)`,
                   }}
                 >
-                  <div className="text-white/40">Team</div>
+                  <div className="text-gray-400">Team</div>
                   {headers.map((h) => (
-                    <div key={h} className="text-white/40">{h}</div>
+                    <div key={h} className="text-gray-400">{h}</div>
                   ))}
-                  <div className="font-medium text-white/70">
+                  <div className="font-medium text-gray-600">
                     {meta.data.awayTeam.abbreviation}
                   </div>
                   {meta.data.awayTeam.quarterScores.map((s, i) => (
-                    <div key={i} className="text-white/60 tabular-nums">{s}</div>
+                    <div key={i} className="text-gray-500 tabular-nums">{s}</div>
                   ))}
-                  <div className="font-medium text-white/70">
+                  <div className="font-medium text-gray-600">
                     {meta.data.homeTeam.abbreviation}
                   </div>
                   {meta.data.homeTeam.quarterScores.map((s, i) => (
-                    <div key={i} className="text-white/60 tabular-nums">{s}</div>
+                    <div key={i} className="text-gray-500 tabular-nums">{s}</div>
                   ))}
                 </div>
               );
@@ -168,8 +168,8 @@ export default function GamePage() {
 
           {/* Shot breakdown */}
           {shots.data && (
-            <div className="bg-white/5 border border-white/10 rounded-lg p-4">
-              <h3 className="text-sm font-semibold text-white/80 mb-3">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+              <h3 className="text-sm font-semibold text-gray-700 mb-3">
                 Shooting Summary
               </h3>
               {[meta.data.awayTeam, meta.data.homeTeam].map((team) => {
@@ -183,10 +183,10 @@ export default function GamePage() {
                 const threesMade = threes.filter((s) => s.made).length;
                 return (
                   <div key={team.teamId} className="mb-2 last:mb-0">
-                    <div className="text-xs font-medium text-white/60 mb-1">
+                    <div className="text-xs font-medium text-gray-600 mb-1">
                       {team.abbreviation}
                     </div>
-                    <div className="text-xs text-white/40 space-x-3">
+                    <div className="text-xs text-gray-400 space-x-3">
                       <span>
                         FG: {made}/{teamShots.length} (
                         {teamShots.length > 0

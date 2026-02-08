@@ -10,8 +10,8 @@ interface CourtProps {
   height?: number;
 }
 
-const COURT_COLOR = '#1a1a2e';
-const LINE_COLOR = '#ffffff';
+const COURT_COLOR = '#f1ece4';
+const LINE_COLOR = '#888';
 const LW = 1.5;
 
 /**
@@ -139,7 +139,7 @@ export default function Court({ children, width, height }: CourtProps) {
       />
 
       {/* Basket ring */}
-      <circle cx={cx} cy={by} r={rimR} fill="none" stroke="#ff6b35" strokeWidth={2} />
+      <circle cx={cx} cy={by} r={rimR} fill="none" stroke="#e25822" strokeWidth={2} />
 
       {/* Data layer */}
       {children?.(mapper)}

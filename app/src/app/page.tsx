@@ -20,8 +20,8 @@ const GAMES = [
 export default function Home() {
   return (
     <div className="max-w-4xl mx-auto px-4 py-12">
-      <h1 className="text-3xl font-bold mb-2">NBA Match Dashboard</h1>
-      <p className="text-white/50 mb-8">
+      <h1 className="text-3xl font-bold mb-2 text-gray-900">NBA Match Dashboard</h1>
+      <p className="text-gray-500 mb-8">
         Interactive game visualizations — shot charts, assist networks, score
         timelines
       </p>
@@ -31,9 +31,9 @@ export default function Home() {
           <Link
             key={game.id}
             href={`/game/${game.id}`}
-            className="block bg-white/5 border border-white/10 rounded-lg p-5 hover:bg-white/10 transition-colors"
+            className="block bg-white rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow border border-gray-100"
           >
-            <div className="text-xs text-white/40 mb-3">{game.label}</div>
+            <div className="text-xs text-gray-400 mb-3 font-medium">{game.label}</div>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <span
@@ -42,13 +42,13 @@ export default function Home() {
                 >
                   {game.away.abbrev}
                 </span>
-                <span className="text-2xl font-black tabular-nums text-white">
+                <span className="text-2xl font-black tabular-nums text-gray-900">
                   {game.away.score}
                 </span>
               </div>
-              <span className="text-white/20 text-sm">vs</span>
+              <span className="text-gray-300 text-sm">vs</span>
               <div className="flex items-center gap-3">
-                <span className="text-2xl font-black tabular-nums text-white">
+                <span className="text-2xl font-black tabular-nums text-gray-900">
                   {game.home.score}
                 </span>
                 <span
@@ -59,7 +59,7 @@ export default function Home() {
                 </span>
               </div>
             </div>
-            <div className="text-xs text-white/30 mt-2">{game.date}</div>
+            <div className="text-xs text-gray-400 mt-2">{game.date}</div>
           </Link>
         ))}
       </div>

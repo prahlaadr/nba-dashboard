@@ -49,19 +49,16 @@ function NetworkGraph({
 
     const g = svg.append('g');
 
-    // Scale for node radius
     const radiusScale = d3
       .scaleSqrt()
       .domain([0, maxAssists])
       .range([6, 22]);
 
-    // Scale for link width
     const linkScale = d3
       .scaleLinear()
       .domain([1, maxLinkValue])
       .range([1, 5]);
 
-    // Create simulation
     const nodes: SimNode[] = graph.nodes.map((n) => ({ ...n }));
     const links: SimLink[] = graph.links.map((l) => ({
       source: l.source,
@@ -85,17 +82,15 @@ function NetworkGraph({
     const simNodes = simulation.nodes();
     const simLinks = (simulation.force('link') as d3.ForceLink<SimNode, SimLink>).links();
 
-    // Links
     const link = g
       .selectAll('.link')
       .data(simLinks)
       .join('line')
       .attr('class', 'link')
-      .attr('stroke', colors.primary)
-      .attr('stroke-opacity', 0.4)
+      .attr('stroke', '#cbd5e1')
+      .attr('stroke-opacity', 0.6)
       .attr('stroke-width', (d: any) => linkScale(d.value));
 
-    // Nodes
     const node = g
       .selectAll('.node')
       .data(simNodes)
@@ -107,7 +102,6 @@ function NetworkGraph({
       .attr('stroke-width', 1.5)
       .attr('opacity', 0.85);
 
-    // Labels
     const label = g
       .selectAll('.label')
       .data(simNodes)
@@ -115,7 +109,7 @@ function NetworkGraph({
       .attr('class', 'label')
       .attr('text-anchor', 'middle')
       .attr('dy', (d: any) => radiusScale(d.assists) + 14)
-      .attr('fill', '#e2e8f0')
+      .attr('fill', '#374151')
       .attr('font-size', '10px')
       .attr('font-weight', '500')
       .text((d: any) => d.id);
@@ -136,12 +130,10 @@ function NetworkGraph({
         .attr('y', (d: any) => d.y);
     });
 
-    // Run simulation synchronously for faster render
     simulation.alpha(1).restart();
     for (let i = 0; i < 120; i++) simulation.tick();
     simulation.stop();
 
-    // Final position update
     link
       .attr('x1', (d: any) => d.source.x)
       .attr('y1', (d: any) => d.source.y)
@@ -193,7 +185,7 @@ export default function AssistNetwork({
           teamId={home.nodes[0]?.teamId ?? 0}
         />
       </div>
-      <p className="text-center text-white/30 text-xs mt-2">
+      <p className="text-center text-gray-400 text-xs mt-2">
         Node size = total assists | Line width = connection frequency
       </p>
     </div>

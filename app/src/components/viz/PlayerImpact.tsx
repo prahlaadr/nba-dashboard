@@ -83,12 +83,12 @@ function TeamBars({
                 x={LABEL_WIDTH - 8}
                 y={BAR_HEIGHT / 2}
                 textAnchor="end"
-                fill="#e2e8f0"
+                fill="#374151"
                 fontSize={10}
                 dy={3}
               >
                 {player.isStarter && (
-                  <tspan fill="#fbbf24" fontSize={8}>
+                  <tspan fill="#d97706" fontSize={8}>
                     {'★ '}
                   </tspan>
                 )}
@@ -113,8 +113,7 @@ function TeamBars({
                   y1={0}
                   x2={LABEL_WIDTH + zeroX}
                   y2={BAR_HEIGHT}
-                  stroke="white"
-                  strokeOpacity={0.2}
+                  stroke="#e5e7eb"
                   strokeWidth={1}
                 />
               )}
@@ -123,7 +122,7 @@ function TeamBars({
               <text
                 x={LABEL_WIDTH + barX + barWidth + 4}
                 y={BAR_HEIGHT / 2}
-                fill="#94a3b8"
+                fill="#6b7280"
                 fontSize={9}
                 dy={3}
               >
@@ -163,8 +162,8 @@ export default function PlayerImpact({
             onClick={() => setActiveStat(s.key)}
             className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
               activeStat === s.key
-                ? 'bg-white/20 text-white'
-                : 'bg-white/5 text-white/50 hover:text-white/80'
+                ? 'bg-gray-200 text-gray-900'
+                : 'bg-gray-100 text-gray-500 hover:text-gray-700'
             }`}
           >
             {s.label}
