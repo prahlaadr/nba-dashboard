@@ -2,6 +2,7 @@
 
 import { useMemo } from 'react';
 import { useParams } from 'next/navigation';
+import Link from 'next/link';
 import { useGameData } from '@/lib/api';
 import { useDashboardStore } from '@/store/dashboardStore';
 import GameHeader from '@/components/match/GameHeader';
@@ -63,6 +64,12 @@ export default function GamePage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-6 space-y-6">
+      <Link
+        href="/"
+        className="inline-block text-sm text-white/40 hover:text-white/70 transition-colors mb-2"
+      >
+        ← All Games
+      </Link>
       <GameHeader meta={meta.data} />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
