@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 
-export type TabId = 'shots' | 'assists' | 'impact';
+export type TabId = 'shots' | 'assists' | 'impact' | 'stats';
 
 interface DashboardState {
   activeTab: TabId;

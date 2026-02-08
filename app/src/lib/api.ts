@@ -131,16 +131,24 @@ export function parseBoxScore(response: NbaResponse): PlayerBoxScore[] {
   }));
 }
 
+const QUERY_OPTS = {
+  staleTime: 5 * 60 * 1000,
+  gcTime: 30 * 60 * 1000,
+  refetchOnWindowFocus: false,
+} as const;
+
 export function useGameData(gameId: string) {
+  const metaRaw = useQuery({
+    queryKey: ['meta_raw', gameId],
+    queryFn: () => fetchJson<NbaResponse>(gameId, 'meta.json'),
+    ...QUERY_OPTS,
+  });
+
   const meta = useQuery({
     queryKey: ['meta', gameId],
-    queryFn: async () => {
-      const raw = await fetchJson<NbaResponse>(gameId, 'meta.json');
-      return parseMeta(raw);
-    },
-    staleTime: 5 * 60 * 1000,
-    gcTime: 30 * 60 * 1000,
-    refetchOnWindowFocus: false,
+    queryFn: () => parseMeta(metaRaw.data!),
+    enabled: !!metaRaw.data,
+    ...QUERY_OPTS,
   });
 
   const shots = useQuery({
@@ -149,44 +157,42 @@ export function useGameData(gameId: string) {
       const raw = await fetchJson<NbaResponse>(gameId, 'shots.json');
       return parseShots(raw);
     },
-    staleTime: 5 * 60 * 1000,
-    gcTime: 30 * 60 * 1000,
-    refetchOnWindowFocus: false,
+    ...QUERY_OPTS,
   });
 
   const playByPlay = useQuery({
     queryKey: ['playbyplay', gameId],
     queryFn: () => fetchJson<PbpResponse>(gameId, 'playbyplay.json'),
-    staleTime: 5 * 60 * 1000,
-    gcTime: 30 * 60 * 1000,
-    refetchOnWindowFocus: false,
+    ...QUERY_OPTS,
+  });
+
+  const boxscoreRaw = useQuery({
+    queryKey: ['boxscore_raw', gameId],
+    queryFn: () => fetchJson<NbaResponse>(gameId, 'boxscore.json'),
+    ...QUERY_OPTS,
   });
 
   const boxScore = useQuery({
     queryKey: ['boxscore', gameId],
-    queryFn: async () => {
-      const raw = await fetchJson<NbaResponse>(gameId, 'boxscore.json');
-      return parseBoxScore(raw);
-    },
-    staleTime: 5 * 60 * 1000,
-    gcTime: 30 * 60 * 1000,
-    refetchOnWindowFocus: false,
+    queryFn: () => parseBoxScore(boxscoreRaw.data!),
+    enabled: !!boxscoreRaw.data,
+    ...QUERY_OPTS,
   });
 
   const advancedBoxScore = useQuery({
     queryKey: ['boxscore_advanced', gameId],
     queryFn: () =>
       fetchJson<AdvancedBoxScoreResponse>(gameId, 'boxscore_advanced.json'),
-    staleTime: 5 * 60 * 1000,
-    gcTime: 30 * 60 * 1000,
-    refetchOnWindowFocus: false,
+    ...QUERY_OPTS,
   });
 
   return {
     meta,
+    metaRaw,
     shots,
     playByPlay,
     boxScore,
+    boxscoreRaw,
     advancedBoxScore,
     isLoading:
       meta.isLoading ||

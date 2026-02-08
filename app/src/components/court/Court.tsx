@@ -12,243 +12,137 @@ interface CourtProps {
 
 const COURT_COLOR = '#1a1a2e';
 const LINE_COLOR = '#ffffff';
-const LINE_WIDTH = 1.5;
+const LW = 1.5;
 
 /**
  * Half-court SVG with all NBA court markings.
- * Uses render-prop: children receives a CoordinateMapper for plotting data.
+ * Basket at bottom-center, half-court line at top.
  *
- * All coordinates in NBA units (tenths of feet).
- * Basket at SVG bottom-center, half-court line at top.
+ * All dimensions in NBA coordinate units (tenths of feet).
+ * SVG viewBox: 500 wide × 470 tall.
+ * Basket center: (250, 417.5) in SVG coords.
  */
 export default function Court({ children, width, height }: CourtProps) {
   const mapper = createCoordinateMapper();
 
-  // Court boundaries
-  const courtLeft = 0;
-  const courtRight = SVG.WIDTH; // 500
-  const courtTop = 0;
-  const courtBottom = SVG.HEIGHT; // 470
+  // Key positions in SVG coords
+  const W = SVG.WIDTH;   // 500
+  const H = SVG.HEIGHT;  // 470
+  const cx = 250;        // court center X (basket X)
+  const by = mapper.y(0); // basket Y ≈ 417.5
 
-  // Basket position in SVG coords
-  const basketX = mapper.x(0); // 250
-  const basketY = mapper.y(0); // ~417.5
+  // Paint: 16ft wide (160 units), 19ft tall (190 units) from basket
+  const paintW = 160;
+  const paintH = 190;
+  const paintL = cx - paintW / 2; // 170
+  const paintR = cx + paintW / 2; // 330
+  const paintT = by - paintH;     // ~227.5 (free throw line Y)
 
-  // Paint (key) — 16ft wide, 19ft from baseline
-  const paintHalfWidth = 80; // 8ft * 10
-  const paintHeight = 190; // 19ft * 10
-  const paintLeft = basketX - paintHalfWidth;
-  const paintRight = basketX + paintHalfWidth;
-  const paintTop = basketY - paintHeight;
+  // Free throw circle: 6ft radius (60 units), centered on free throw line
+  const ftR = 60;
 
-  // Free throw circle — 6ft radius
-  const ftRadius = 60;
+  // 3-point: 23.75ft radius (237.5 units) from basket center
+  // Corner 3: 22ft (220 units) from basket center, straight lines along sideline
+  const threeR = 237.5;
+  const cornerX = 220; // half-width of corner 3 from center
+  // Where the arc meets the corner line: solve for y at x=220 on circle of radius 237.5
+  // y = sqrt(237.5² - 220²) = sqrt(8006.25) ≈ 89.5
+  const arcJoinY = Math.sqrt(threeR * threeR - cornerX * cornerX);
+  // In SVG coords, the arc endpoints
+  const arcLeftX = cx - cornerX;   // 30
+  const arcRightX = cx + cornerX;  // 470
+  const arcJoinSvgY = by - arcJoinY; // ~328
 
-  // 3-point arc
-  const threeRadius = 237.5; // 23.75ft * 10
-  const cornerThreeY = basketY; // Y position where corner meets arc
-  const cornerThreeFromBaseline = 140; // 14ft * 10 — length of corner 3 line
+  // Restricted area: 4ft radius (40 units)
+  const raR = 40;
 
-  // Restricted area — 4ft radius
-  const restrictedRadius = 40;
+  // Backboard: 6ft wide (60 units)
+  const bbW = 60;
+  const bbY = by + 10;
 
-  // Backboard
-  const backboardWidth = 60; // 6ft * 10
-  const backboardY = basketY + 10; // just behind basket
+  // Basket ring
+  const rimR = 7.5;
 
-  // Basket
-  const basketRadius = 7.5;
+  // Center circle: 6ft radius (60 units), half-arc at top
+  const ccR = 60;
 
   return (
     <svg
-      viewBox={`${-SVG.PADDING} ${-SVG.PADDING} ${SVG.WIDTH + SVG.PADDING * 2} ${SVG.HEIGHT + SVG.PADDING * 2}`}
+      viewBox={`${-SVG.PADDING} ${-SVG.PADDING} ${W + SVG.PADDING * 2} ${H + SVG.PADDING * 2}`}
       width={width}
       height={height}
       className="w-full h-auto max-h-[600px]"
       style={{ background: COURT_COLOR }}
     >
       {/* Court boundary */}
-      <rect
-        x={courtLeft}
-        y={courtTop}
-        width={courtRight}
-        height={courtBottom}
-        fill="none"
-        stroke={LINE_COLOR}
-        strokeWidth={LINE_WIDTH}
-      />
+      <rect x={0} y={0} width={W} height={H} fill="none" stroke={LINE_COLOR} strokeWidth={LW} />
 
-      {/* Half-court line (top) */}
-      <line
-        x1={courtLeft}
-        y1={courtTop}
-        x2={courtRight}
-        y2={courtTop}
-        stroke={LINE_COLOR}
-        strokeWidth={LINE_WIDTH}
-      />
-
-      {/* Center circle (half arc, visible at top) */}
+      {/* Center circle — semicircle bowing down into the court */}
       <path
-        d={describeArc(basketX, courtTop, 60, 0, 180)}
+        d={`M ${cx - ccR} 0 A ${ccR} ${ccR} 0 0 0 ${cx + ccR} 0`}
         fill="none"
         stroke={LINE_COLOR}
-        strokeWidth={LINE_WIDTH}
+        strokeWidth={LW}
       />
 
-      {/* Paint / Key */}
+      {/* Paint / Key rectangle */}
       <rect
-        x={paintLeft}
-        y={paintTop}
-        width={paintHalfWidth * 2}
-        height={paintHeight + (courtBottom - basketY)}
-        fill="none"
-        stroke={LINE_COLOR}
-        strokeWidth={LINE_WIDTH}
+        x={paintL} y={paintT}
+        width={paintW} height={H - paintT}
+        fill="none" stroke={LINE_COLOR} strokeWidth={LW}
       />
 
-      {/* Free throw line */}
-      <line
-        x1={paintLeft}
-        y1={paintTop}
-        x2={paintRight}
-        y2={paintTop}
-        stroke={LINE_COLOR}
-        strokeWidth={LINE_WIDTH}
-      />
-
-      {/* Free throw circle (full) */}
-      <circle
-        cx={basketX}
-        cy={paintTop}
-        r={ftRadius}
+      {/* Free throw circle — bottom half (toward basket) solid */}
+      <path
+        d={`M ${cx - ftR} ${paintT} A ${ftR} ${ftR} 0 0 0 ${cx + ftR} ${paintT}`}
         fill="none"
         stroke={LINE_COLOR}
-        strokeWidth={LINE_WIDTH}
+        strokeWidth={LW}
+      />
+      {/* Free throw circle — top half (toward half court) dashed */}
+      <path
+        d={`M ${cx - ftR} ${paintT} A ${ftR} ${ftR} 0 0 1 ${cx + ftR} ${paintT}`}
+        fill="none"
+        stroke={LINE_COLOR}
+        strokeWidth={LW}
         strokeDasharray="8 8"
       />
-      {/* Free throw circle — solid top half */}
-      <path
-        d={describeArc(basketX, paintTop, ftRadius, 180, 360)}
-        fill="none"
-        stroke={LINE_COLOR}
-        strokeWidth={LINE_WIDTH}
-      />
 
-      {/* 3-point arc */}
+      {/* 3-point line: corner lines + arc */}
       <path
         d={`
-          M ${basketX - 220} ${courtBottom}
-          L ${basketX - 220} ${cornerThreeY - cornerThreeFromBaseline}
-          ${describeArcPath(basketX, basketY, threeRadius,
-            Math.acos(220 / threeRadius) * (180 / Math.PI),
-            180 - Math.acos(220 / threeRadius) * (180 / Math.PI)
-          )}
-          L ${basketX + 220} ${courtBottom}
+          M ${arcLeftX} ${H}
+          L ${arcLeftX} ${arcJoinSvgY}
+          A ${threeR} ${threeR} 0 0 1 ${arcRightX} ${arcJoinSvgY}
+          L ${arcRightX} ${H}
         `}
         fill="none"
         stroke={LINE_COLOR}
-        strokeWidth={LINE_WIDTH}
+        strokeWidth={LW}
       />
 
-      {/* Restricted area arc */}
+      {/* Restricted area — semicircle bowing toward half court (upward) */}
       <path
-        d={describeArc(basketX, basketY, restrictedRadius, 0, 180)}
+        d={`M ${cx - raR} ${by} A ${raR} ${raR} 0 0 1 ${cx + raR} ${by}`}
         fill="none"
         stroke={LINE_COLOR}
-        strokeWidth={LINE_WIDTH}
+        strokeWidth={LW}
       />
-      {/* Restricted area vertical lines */}
-      <line
-        x1={basketX - restrictedRadius}
-        y1={basketY}
-        x2={basketX - restrictedRadius}
-        y2={courtBottom}
-        stroke={LINE_COLOR}
-        strokeWidth={LINE_WIDTH}
-      />
-      <line
-        x1={basketX + restrictedRadius}
-        y1={basketY}
-        x2={basketX + restrictedRadius}
-        y2={courtBottom}
-        stroke={LINE_COLOR}
-        strokeWidth={LINE_WIDTH}
-      />
+      {/* Restricted area vertical lines to baseline */}
+      <line x1={cx - raR} y1={by} x2={cx - raR} y2={H} stroke={LINE_COLOR} strokeWidth={LW} />
+      <line x1={cx + raR} y1={by} x2={cx + raR} y2={H} stroke={LINE_COLOR} strokeWidth={LW} />
 
       {/* Backboard */}
       <line
-        x1={basketX - backboardWidth / 2}
-        y1={backboardY}
-        x2={basketX + backboardWidth / 2}
-        y2={backboardY}
-        stroke={LINE_COLOR}
-        strokeWidth={2}
+        x1={cx - bbW / 2} y1={bbY} x2={cx + bbW / 2} y2={bbY}
+        stroke={LINE_COLOR} strokeWidth={2}
       />
 
       {/* Basket ring */}
-      <circle
-        cx={basketX}
-        cy={basketY}
-        r={basketRadius}
-        fill="none"
-        stroke="#ff6b35"
-        strokeWidth={2}
-      />
+      <circle cx={cx} cy={by} r={rimR} fill="none" stroke="#ff6b35" strokeWidth={2} />
 
-      {/* Data layer — children get the coordinate mapper */}
+      {/* Data layer */}
       {children?.(mapper)}
     </svg>
   );
-}
-
-/** Helper: SVG arc path for a circle arc (clockwise, angles in degrees from top) */
-function describeArc(
-  cx: number,
-  cy: number,
-  r: number,
-  startAngle: number,
-  endAngle: number
-): string {
-  const start = polarToCartesian(cx, cy, r, endAngle);
-  const end = polarToCartesian(cx, cy, r, startAngle);
-  const largeArc = endAngle - startAngle <= 180 ? 0 : 1;
-  return `M ${start.x} ${start.y} A ${r} ${r} 0 ${largeArc} 0 ${end.x} ${end.y}`;
-}
-
-/** Helper: SVG arc path segment (no M command) for embedding in larger paths */
-function describeArcPath(
-  cx: number,
-  cy: number,
-  r: number,
-  startAngleDeg: number,
-  endAngleDeg: number
-): string {
-  // Convert degrees to SVG convention (0 = right, going clockwise)
-  // We want arc from left side to right side, going over the top
-  const startRad = ((180 + startAngleDeg) * Math.PI) / 180;
-  const endRad = ((180 + endAngleDeg) * Math.PI) / 180;
-
-  const x1 = cx + r * Math.cos(startRad);
-  const y1 = cy - r * Math.sin(startRad);
-  const x2 = cx + r * Math.cos(endRad);
-  const y2 = cy - r * Math.sin(endRad);
-
-  const sweepAngle = endAngleDeg - startAngleDeg;
-  const largeArc = Math.abs(sweepAngle) > 180 ? 1 : 0;
-
-  return `A ${r} ${r} 0 ${largeArc} 1 ${x2} ${y2}`;
-}
-
-function polarToCartesian(
-  cx: number,
-  cy: number,
-  r: number,
-  angleDeg: number
-) {
-  const rad = ((angleDeg - 90) * Math.PI) / 180;
-  return {
-    x: cx + r * Math.cos(rad),
-    y: cy + r * Math.sin(rad),
-  };
 }

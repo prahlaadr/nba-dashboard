@@ -6,6 +6,7 @@ const TABS: { id: TabId; label: string }[] = [
   { id: 'shots', label: 'Shot Chart' },
   { id: 'assists', label: 'Assist Network' },
   { id: 'impact', label: 'Player Impact' },
+  { id: 'stats', label: 'Match Stats' },
 ];
 
 export default function TabNav() {

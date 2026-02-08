@@ -10,17 +10,19 @@ import TabNav from '@/components/match/TabNav';
 import ShotChart from '@/components/court/ShotChart';
 import AssistNetwork from '@/components/viz/AssistNetwork';
 import PlayerImpact from '@/components/viz/PlayerImpact';
+import MatchStats from '@/components/viz/MatchStats';
 import WinProbability from '@/components/viz/WinProbability';
 import { transformAssistNetwork } from '@/lib/transformers/assistNetwork';
 import { transformScoreProgression } from '@/lib/transformers/winProbability';
 import { transformPlayerImpact } from '@/lib/transformers/playerImpact';
+import { transformMatchStats } from '@/lib/transformers/matchStats';
 
 export default function GamePage() {
   const params = useParams<{ gameId: string }>();
   const gameId = params.gameId;
   const { activeTab } = useDashboardStore();
 
-  const { meta, shots, playByPlay, boxScore, isLoading, isError } =
+  const { meta, metaRaw, shots, playByPlay, boxScore, boxscoreRaw, isLoading, isError } =
     useGameData(gameId);
 
   const assistData = useMemo(() => {
@@ -45,6 +47,16 @@ export default function GamePage() {
       meta.data.awayTeam.teamId
     );
   }, [boxScore.data, meta.data]);
+
+  const matchStatsData = useMemo(() => {
+    if (!boxscoreRaw.data || !metaRaw.data || !meta.data) return null;
+    return transformMatchStats(
+      boxscoreRaw.data,
+      metaRaw.data,
+      meta.data.homeTeam.teamId,
+      meta.data.awayTeam.teamId
+    );
+  }, [boxscoreRaw.data, metaRaw.data, meta.data]);
 
   if (isLoading) {
     return (
@@ -97,6 +109,10 @@ export default function GamePage() {
                 away={impactData.away}
                 meta={meta.data}
               />
+            )}
+
+            {activeTab === 'stats' && matchStatsData && (
+              <MatchStats groups={matchStatsData} meta={meta.data} />
             )}
           </div>
         </div>
