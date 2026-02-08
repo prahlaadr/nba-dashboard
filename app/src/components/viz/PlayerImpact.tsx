@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import * as d3 from 'd3';
 import type { PlayerImpactData, GameMeta } from '@/types/nba';
 import { getTeamColors } from '@/lib/teamColors';
 
@@ -20,119 +19,127 @@ const STATS: { key: StatKey; label: string }[] = [
   { key: 'plusMinus', label: '+/-' },
 ];
 
-const BAR_HEIGHT = 22;
-const LABEL_WIDTH = 100;
-const CHART_WIDTH = 300;
-const GAP = 3;
+function PlayerRow({
+  player,
+  statKey,
+  maxValue,
+  barColor,
+}: {
+  player: PlayerImpactData;
+  statKey: StatKey;
+  maxValue: number;
+  barColor: string;
+}) {
+  const value = player[statKey];
+  const isPlusMinus = statKey === 'plusMinus';
+  const pct = isPlusMinus
+    ? (Math.abs(value) / maxValue) * 50
+    : (value / maxValue) * 100;
 
-function TeamBars({
+  const color = isPlusMinus
+    ? value >= 0
+      ? '#22c55e'
+      : '#ef4444'
+    : barColor;
+
+  const lastName = player.playerName.split(' ').pop();
+
+  return (
+    <div className="flex items-center gap-3 py-1.5">
+      {/* Name */}
+      <div className="w-32 text-right shrink-0">
+        <span className="text-sm text-gray-700">
+          {player.isStarter && (
+            <span className="text-amber-500 text-xs mr-1">S</span>
+          )}
+          {lastName}
+        </span>
+      </div>
+
+      {/* Bar */}
+      <div className="flex-1 h-6 bg-gray-100 rounded overflow-hidden relative">
+        {isPlusMinus ? (
+          // +/- bar: center-anchored
+          <div className="absolute inset-0 flex">
+            <div className="w-1/2 flex justify-end">
+              {value < 0 && (
+                <div
+                  className="h-full rounded-l transition-all duration-300"
+                  style={{
+                    width: `${pct}%`,
+                    backgroundColor: color,
+                    opacity: 0.7,
+                  }}
+                />
+              )}
+            </div>
+            <div className="w-px bg-gray-300" />
+            <div className="w-1/2">
+              {value > 0 && (
+                <div
+                  className="h-full rounded-r transition-all duration-300"
+                  style={{
+                    width: `${pct}%`,
+                    backgroundColor: color,
+                    opacity: 0.7,
+                  }}
+                />
+              )}
+            </div>
+          </div>
+        ) : (
+          <div
+            className="h-full rounded transition-all duration-300"
+            style={{
+              width: `${Math.max(pct, 1)}%`,
+              backgroundColor: color,
+              opacity: 0.7,
+            }}
+          />
+        )}
+      </div>
+
+      {/* Value */}
+      <div className="w-10 text-right shrink-0">
+        <span className="text-sm font-semibold tabular-nums text-gray-700">
+          {isPlusMinus && value > 0 ? '+' : ''}
+          {value}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+function TeamSection({
   players,
   statKey,
   teamLabel,
-  teamId,
   maxValue,
+  chartColor,
 }: {
   players: PlayerImpactData[];
   statKey: StatKey;
   teamLabel: string;
-  teamId: number;
   maxValue: number;
+  chartColor: string;
 }) {
-  const colors = getTeamColors(teamLabel);
-
-  const scale = d3
-    .scaleLinear()
-    .domain(statKey === 'plusMinus' ? [-maxValue, maxValue] : [0, maxValue])
-    .range(statKey === 'plusMinus' ? [0, CHART_WIDTH] : [0, CHART_WIDTH]);
-
-  const zeroX = statKey === 'plusMinus' ? scale(0) : 0;
-
   return (
-    <div className="flex-1 min-w-0">
-      <h4 className="text-xs font-semibold mb-2" style={{ color: colors.chart }}>
+    <div>
+      <h4
+        className="text-sm font-bold mb-2 pb-2 border-b border-gray-100"
+        style={{ color: chartColor }}
+      >
         {teamLabel}
       </h4>
-      <svg
-        viewBox={`0 0 ${LABEL_WIDTH + CHART_WIDTH + 40} ${players.length * (BAR_HEIGHT + GAP) + 5}`}
-        className="w-full h-auto"
-      >
-        {players.map((player, i) => {
-          const value = player[statKey];
-          const y = i * (BAR_HEIGHT + GAP);
-
-          let barX: number, barWidth: number;
-          if (statKey === 'plusMinus') {
-            barX = value >= 0 ? zeroX : scale(value);
-            barWidth = Math.abs(scale(value) - zeroX);
-          } else {
-            barX = 0;
-            barWidth = scale(value);
-          }
-
-          const barColor =
-            statKey === 'plusMinus'
-              ? value >= 0
-                ? '#22c55e'
-                : '#ef4444'
-              : colors.chart;
-
-          return (
-            <g key={player.playerId} transform={`translate(0, ${y})`}>
-              {/* Player name */}
-              <text
-                x={LABEL_WIDTH - 8}
-                y={BAR_HEIGHT / 2}
-                textAnchor="end"
-                fill="#374151"
-                fontSize={10}
-                dy={3}
-              >
-                {player.isStarter && (
-                  <tspan fill="#d97706" fontSize={8}>
-                    {'★ '}
-                  </tspan>
-                )}
-                {player.playerName.split(' ').pop()}
-              </text>
-
-              {/* Bar */}
-              <rect
-                x={LABEL_WIDTH + barX}
-                y={2}
-                width={Math.max(0, barWidth)}
-                height={BAR_HEIGHT - 4}
-                fill={barColor}
-                opacity={0.75}
-                rx={2}
-              />
-
-              {/* +/- zero line */}
-              {statKey === 'plusMinus' && (
-                <line
-                  x1={LABEL_WIDTH + zeroX}
-                  y1={0}
-                  x2={LABEL_WIDTH + zeroX}
-                  y2={BAR_HEIGHT}
-                  stroke="#e5e7eb"
-                  strokeWidth={1}
-                />
-              )}
-
-              {/* Value label */}
-              <text
-                x={LABEL_WIDTH + barX + barWidth + 4}
-                y={BAR_HEIGHT / 2}
-                fill="#6b7280"
-                fontSize={9}
-                dy={3}
-              >
-                {statKey === 'plusMinus' && value > 0 ? '+' : ''}
-                {value}
-              </text>
-            </g>
-          );
-        })}
-      </svg>
+      {players.map((player) => (
+        <PlayerRow
+          key={player.playerId}
+          player={player}
+          statKey={statKey}
+          maxValue={maxValue}
+          barColor={chartColor}
+        />
+      ))}
     </div>
   );
 }
@@ -144,26 +151,29 @@ export default function PlayerImpact({
 }: PlayerImpactProps) {
   const [activeStat, setActiveStat] = useState<StatKey>('pts');
 
+  const awayColors = getTeamColors(meta.awayTeam.abbreviation);
+  const homeColors = getTeamColors(meta.homeTeam.abbreviation);
+
   const maxValue = useMemo(() => {
     const all = [...home, ...away];
     if (activeStat === 'plusMinus') {
-      return Math.max(1, d3.max(all, (d) => Math.abs(d[activeStat])) ?? 1);
+      return Math.max(1, ...all.map((d) => Math.abs(d[activeStat])));
     }
-    return Math.max(1, d3.max(all, (d) => d[activeStat]) ?? 1);
+    return Math.max(1, ...all.map((d) => d[activeStat]));
   }, [home, away, activeStat]);
 
   return (
     <div>
       {/* Stat tabs */}
-      <div className="flex gap-1 mb-4">
+      <div className="flex gap-1 mb-5">
         {STATS.map((s) => (
           <button
             key={s.key}
             onClick={() => setActiveStat(s.key)}
-            className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
+            className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
               activeStat === s.key
                 ? 'bg-gray-200 text-gray-900'
-                : 'bg-gray-100 text-gray-500 hover:text-gray-700'
+                : 'bg-gray-100 text-gray-400 hover:text-gray-600'
             }`}
           >
             {s.label}
@@ -171,20 +181,20 @@ export default function PlayerImpact({
         ))}
       </div>
 
-      <div className="flex gap-6">
-        <TeamBars
+      <div className="space-y-6">
+        <TeamSection
           players={away}
           statKey={activeStat}
           teamLabel={meta.awayTeam.abbreviation}
-          teamId={meta.awayTeam.teamId}
           maxValue={maxValue}
+          chartColor={awayColors.chart}
         />
-        <TeamBars
+        <TeamSection
           players={home}
           statKey={activeStat}
           teamLabel={meta.homeTeam.abbreviation}
-          teamId={meta.homeTeam.teamId}
           maxValue={maxValue}
+          chartColor={homeColors.chart}
         />
       </div>
     </div>
