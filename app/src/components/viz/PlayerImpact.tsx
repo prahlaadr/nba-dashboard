@@ -164,6 +164,7 @@ export default function PlayerImpact({
 
   return (
     <div>
+      <h3 className="text-sm font-semibold text-gray-700 mb-3">Player Box Score</h3>
       {/* Stat tabs */}
       <div className="flex gap-1 mb-5">
         {STATS.map((s) => (
