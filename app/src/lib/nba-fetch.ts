@@ -9,6 +9,8 @@ const NBA_HEADERS: Record<string, string> = {
   'x-nba-stats-token': 'true',
 };
 
+const FETCH_TIMEOUT_MS = 8000;
+
 export async function nbaFetch(
   endpoint: string,
   params: Record<string, string>
@@ -18,16 +20,24 @@ export async function nbaFetch(
     url.searchParams.set(k, v);
   }
 
-  const res = await fetch(url.toString(), {
-    headers: NBA_HEADERS,
-    next: { revalidate: 300 }, // cache 5 min
-  });
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
 
-  if (!res.ok) {
-    throw new Error(`NBA API ${endpoint} returned ${res.status}`);
+  try {
+    const res = await fetch(url.toString(), {
+      headers: NBA_HEADERS,
+      signal: controller.signal,
+      next: { revalidate: 300 }, // cache 5 min
+    });
+
+    if (!res.ok) {
+      throw new Error(`NBA API ${endpoint} returned ${res.status}`);
+    }
+
+    return res.json();
+  } finally {
+    clearTimeout(timer);
   }
-
-  return res.json();
 }
 
 /** "002" prefix → Regular Season, "004" → Playoffs */

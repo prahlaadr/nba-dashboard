@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { nbaFetch } from '@/lib/nba-fetch';
+import { readLocalGameData } from '@/lib/local-data';
 
 export async function GET(
   _request: Request,
@@ -18,6 +19,8 @@ export async function GET(
     });
     return NextResponse.json(data);
   } catch {
+    const local = await readLocalGameData(gameId, 'boxscore-advanced');
+    if (local) return NextResponse.json(local);
     return NextResponse.json(
       { error: 'Failed to fetch advanced boxscore' },
       { status: 502 }

@@ -2,13 +2,14 @@
 
 import { useRef, useMemo, useState } from 'react';
 import * as d3 from 'd3';
-import type { ScoreMoment, GameMeta } from '@/types/nba';
+import type { ScoreMoment, GameMeta, ScoringRun } from '@/types/nba';
 import type { ScoreProgressionResult } from '@/lib/transformers/winProbability';
 import { getTeamColors } from '@/lib/teamColors';
 
 interface WinProbabilityProps {
   data: ScoreProgressionResult;
   meta: GameMeta;
+  scoringRuns?: ScoringRun[];
 }
 
 const MARGIN = { top: 24, right: 16, bottom: 32, left: 44 };
@@ -17,7 +18,7 @@ const HEIGHT = 280;
 const INNER_W = WIDTH - MARGIN.left - MARGIN.right;
 const INNER_H = HEIGHT - MARGIN.top - MARGIN.bottom;
 
-export default function WinProbability({ data, meta }: WinProbabilityProps) {
+export default function WinProbability({ data, meta, scoringRuns }: WinProbabilityProps) {
   const svgRef = useRef<SVGSVGElement>(null);
   const [hoverInfo, setHoverInfo] = useState<ScoreMoment | null>(null);
 
@@ -134,6 +135,47 @@ export default function WinProbability({ data, meta }: WinProbabilityProps) {
           {/* Area fills */}
           <path d={areaAbove} fill={homeColors.chart} opacity={0.2} />
           <path d={areaBelow} fill={awayColors.chart} opacity={0.2} />
+
+          {/* Scoring run annotations */}
+          {scoringRuns?.map((run, i) => {
+            const runColor = run.isHome ? homeColors.chart : awayColors.chart;
+            const x1 = xScale(run.startSeconds);
+            const x2 = xScale(run.endSeconds);
+            const labelY = run.isHome ? -4 : -14;
+            return (
+              <g key={i}>
+                {/* Background band */}
+                <rect
+                  x={x1}
+                  y={0}
+                  width={Math.max(x2 - x1, 2)}
+                  height={INNER_H}
+                  fill={runColor}
+                  fillOpacity={0.08}
+                />
+                {/* Dashed edge lines */}
+                <line
+                  x1={x1} y1={0} x2={x1} y2={INNER_H}
+                  stroke={runColor} strokeOpacity={0.3} strokeWidth={1} strokeDasharray="3 3"
+                />
+                <line
+                  x1={x2} y1={0} x2={x2} y2={INNER_H}
+                  stroke={runColor} strokeOpacity={0.3} strokeWidth={1} strokeDasharray="3 3"
+                />
+                {/* Label */}
+                <text
+                  x={(x1 + x2) / 2}
+                  y={labelY}
+                  textAnchor="middle"
+                  fill={runColor}
+                  fontSize={9}
+                  fontWeight={700}
+                >
+                  {run.label} {run.teamTricode}
+                </text>
+              </g>
+            );
+          })}
 
           {/* Zero line */}
           <line

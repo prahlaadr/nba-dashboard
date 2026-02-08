@@ -221,6 +221,15 @@ export interface AssistGraph {
   links: AssistLink[];
 }
 
+export interface ScoringRun {
+  teamTricode: string;
+  startSeconds: number;
+  endSeconds: number;
+  points: number;
+  label: string; // e.g. "12-0"
+  isHome: boolean;
+}
+
 export interface PlayerImpactData {
   playerId: number;
   playerName: string;

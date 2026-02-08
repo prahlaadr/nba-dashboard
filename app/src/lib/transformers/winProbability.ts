@@ -1,4 +1,5 @@
-import type { PbpAction, ScoreMoment } from '@/types/nba';
+import type { PbpAction, ScoreMoment, ScoringRun } from '@/types/nba';
+import type { GameMeta } from '@/types/nba';
 import { REGULATION_SECONDS, OT_SECONDS } from '@/lib/constants';
 
 /**
@@ -103,4 +104,67 @@ export function transformScoreProgression(actions: PbpAction[]): ScoreProgressio
   }
 
   return { moments, totalSeconds, periods };
+}
+
+const RUN_THRESHOLD = 8;
+
+export function detectScoringRuns(moments: ScoreMoment[], meta: GameMeta): ScoringRun[] {
+  const runs: ScoringRun[] = [];
+  if (moments.length < 2) return runs;
+
+  let runStartIdx = 0;
+  let runTeam: 'home' | 'away' | null = null;
+  let runPoints = 0;
+
+  for (let i = 1; i < moments.length; i++) {
+    const prev = moments[i - 1];
+    const curr = moments[i];
+    if (curr.description === 'Start' || curr.description === 'Final') continue;
+
+    const homeDelta = curr.scoreHome - prev.scoreHome;
+    const awayDelta = curr.scoreAway - prev.scoreAway;
+
+    // Determine which team scored
+    let scoringTeam: 'home' | 'away' | null = null;
+    if (homeDelta > 0 && awayDelta === 0) scoringTeam = 'home';
+    else if (awayDelta > 0 && homeDelta === 0) scoringTeam = 'away';
+    else continue; // both scored simultaneously or no change
+
+    if (scoringTeam === runTeam) {
+      // Continue the run
+      runPoints += scoringTeam === 'home' ? homeDelta : awayDelta;
+    } else {
+      // Other team scored — check if the previous run qualifies
+      if (runTeam && runPoints >= RUN_THRESHOLD) {
+        const isHome = runTeam === 'home';
+        runs.push({
+          teamTricode: isHome ? meta.homeTeam.abbreviation : meta.awayTeam.abbreviation,
+          startSeconds: moments[runStartIdx].gameSeconds,
+          endSeconds: moments[i - 1].gameSeconds,
+          points: runPoints,
+          label: `${runPoints}-0`,
+          isHome,
+        });
+      }
+      // Start a new run
+      runTeam = scoringTeam;
+      runStartIdx = i - 1; // start from the moment before this score
+      runPoints = scoringTeam === 'home' ? homeDelta : awayDelta;
+    }
+  }
+
+  // Check final run
+  if (runTeam && runPoints >= RUN_THRESHOLD) {
+    const isHome = runTeam === 'home';
+    runs.push({
+      teamTricode: isHome ? meta.homeTeam.abbreviation : meta.awayTeam.abbreviation,
+      startSeconds: moments[runStartIdx].gameSeconds,
+      endSeconds: moments[moments.length - 1].gameSeconds,
+      points: runPoints,
+      label: `${runPoints}-0`,
+      isHome,
+    });
+  }
+
+  return runs;
 }

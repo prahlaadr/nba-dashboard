@@ -11,7 +11,7 @@ import ShotChart from '@/components/court/ShotChart';
 import PlayerImpact from '@/components/viz/PlayerImpact';
 import MatchStats from '@/components/viz/MatchStats';
 import WinProbability from '@/components/viz/WinProbability';
-import { transformScoreProgression } from '@/lib/transformers/winProbability';
+import { transformScoreProgression, detectScoringRuns } from '@/lib/transformers/winProbability';
 import { transformPlayerImpact } from '@/lib/transformers/playerImpact';
 import { transformMatchStats } from '@/lib/transformers/matchStats';
 import { getTeamColors } from '@/lib/teamColors';
@@ -28,6 +28,11 @@ export default function GamePage() {
     if (!playByPlay.data) return null;
     return transformScoreProgression(playByPlay.data.game.actions);
   }, [playByPlay.data]);
+
+  const scoringRuns = useMemo(() => {
+    if (!scoreMoments || !meta.data) return undefined;
+    return detectScoringRuns(scoreMoments.moments, meta.data);
+  }, [scoreMoments, meta.data]);
 
   const impactData = useMemo(() => {
     if (!boxScore.data || !meta.data) return null;
@@ -105,7 +110,7 @@ export default function GamePage() {
         <div className="space-y-4">
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
             {scoreMoments && (
-              <WinProbability data={scoreMoments} meta={meta.data} />
+              <WinProbability data={scoreMoments} meta={meta.data} scoringRuns={scoringRuns} />
             )}
           </div>
 

@@ -2,9 +2,12 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import Court from './Court';
+import HexBinLayer, { type HexHoverInfo } from './HexBinLayer';
 import type { ShotEvent, GameMeta, PlayerBoxScore } from '@/types/nba';
 import { getTeamColors } from '@/lib/teamColors';
 import { useDashboardStore } from '@/store/dashboardStore';
+
+type ViewMode = 'dots' | 'heat';
 
 interface ShotChartProps {
   shots: ShotEvent[];
@@ -20,6 +23,8 @@ interface Tooltip {
 
 export default function ShotChart({ shots, meta, boxScore }: ShotChartProps) {
   const [tooltip, setTooltip] = useState<Tooltip | null>(null);
+  const [hexTooltip, setHexTooltip] = useState<HexHoverInfo | null>(null);
+  const [viewMode, setViewMode] = useState<ViewMode>('dots');
   const [selectedPlayer, setSelectedPlayer] = useState<string | null>(null);
   const { teamFilter, setTeamFilter } = useDashboardStore();
 
@@ -108,21 +113,59 @@ export default function ShotChart({ shots, meta, boxScore }: ShotChartProps) {
           {meta.homeTeam.abbreviation}
         </button>
 
+        {/* View mode toggle */}
+        <div className="flex items-center gap-1 ml-2 border-l border-gray-200 pl-2">
+          {(['dots', 'heat'] as const).map((mode) => (
+            <button
+              key={mode}
+              onClick={() => setViewMode(mode)}
+              className={`px-2.5 py-1 rounded text-xs font-medium transition-colors ${
+                viewMode === mode
+                  ? 'bg-gray-200 text-gray-900'
+                  : 'bg-gray-100 text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              {mode === 'dots' ? 'Dots' : 'Heat'}
+            </button>
+          ))}
+        </div>
+
         {/* Legend */}
         <div className="flex items-center gap-3 ml-auto text-xs text-gray-400">
-          <span className="flex items-center gap-1">
-            <svg width="10" height="10">
-              <circle cx="5" cy="5" r="4" fill="#888" />
-            </svg>
-            Made
-          </span>
-          <span className="flex items-center gap-1">
-            <svg width="10" height="10">
-              <line x1="1" y1="1" x2="9" y2="9" stroke="#888" strokeWidth="1.5" />
-              <line x1="9" y1="1" x2="1" y2="9" stroke="#888" strokeWidth="1.5" />
-            </svg>
-            Missed
-          </span>
+          {viewMode === 'dots' ? (
+            <>
+              <span className="flex items-center gap-1">
+                <svg width="10" height="10">
+                  <circle cx="5" cy="5" r="4" fill="#888" />
+                </svg>
+                Made
+              </span>
+              <span className="flex items-center gap-1">
+                <svg width="10" height="10">
+                  <line x1="1" y1="1" x2="9" y2="9" stroke="#888" strokeWidth="1.5" />
+                  <line x1="9" y1="1" x2="1" y2="9" stroke="#888" strokeWidth="1.5" />
+                </svg>
+                Missed
+              </span>
+            </>
+          ) : (
+            <>
+              <span className="flex items-center gap-1">
+                <svg width="60" height="10">
+                  <defs>
+                    <linearGradient id="hex-legend-gradient">
+                      <stop offset="0%" stopColor="#3b82f6" />
+                      <stop offset="50%" stopColor="#94a3b8" />
+                      <stop offset="100%" stopColor="#ef4444" />
+                    </linearGradient>
+                  </defs>
+                  <rect width="60" height="10" rx="2" fill="url(#hex-legend-gradient)" />
+                </svg>
+              </span>
+              <span className="text-gray-400">Cold</span>
+              <span className="text-gray-400">Hot</span>
+            </>
+          )}
           <span className="text-gray-500 font-medium">
             {madeCount}/{totalCount} FG (
             {totalCount > 0
@@ -137,75 +180,85 @@ export default function ShotChart({ shots, meta, boxScore }: ShotChartProps) {
         <Court>
           {(mapper) => (
             <g>
-              {/* Render missed shots first (behind), then made shots on top */}
-              {filtered
-                .slice()
-                .sort((a, b) => (a.made === b.made ? 0 : a.made ? 1 : -1))
-                .map((shot) => {
-                  const sx = mapper.x(shot.locX);
-                  const sy = mapper.y(shot.locY);
-                  const color = chartColorMap[shot.teamId] ?? '#888';
-                  const r = 5;
+              {viewMode === 'dots' ? (
+                <>
+                  {/* Render missed shots first (behind), then made shots on top */}
+                  {filtered
+                    .slice()
+                    .sort((a, b) => (a.made === b.made ? 0 : a.made ? 1 : -1))
+                    .map((shot) => {
+                      const sx = mapper.x(shot.locX);
+                      const sy = mapper.y(shot.locY);
+                      const color = chartColorMap[shot.teamId] ?? '#888';
+                      const r = 5;
 
-                  if (shot.made) {
-                    return (
-                      <circle
-                        key={shot.gameEventId}
-                        cx={sx}
-                        cy={sy}
-                        r={r}
-                        fill={color}
-                        fillOpacity={0.85}
-                        stroke={color}
-                        strokeWidth={1}
-                        strokeOpacity={0.4}
-                        className="cursor-pointer"
-                        onMouseEnter={() =>
-                          setTooltip({ x: sx, y: sy, shot })
-                        }
-                        onMouseLeave={() => setTooltip(null)}
-                      />
-                    );
-                  }
-
-                  // Missed shot: X mark
-                  const s = r * 0.7;
-                  return (
-                    <g
-                      key={shot.gameEventId}
-                      className="cursor-pointer"
-                      onMouseEnter={() =>
-                        setTooltip({ x: sx, y: sy, shot })
+                      if (shot.made) {
+                        return (
+                          <circle
+                            key={shot.gameEventId}
+                            cx={sx}
+                            cy={sy}
+                            r={r}
+                            fill={color}
+                            fillOpacity={0.85}
+                            stroke={color}
+                            strokeWidth={1}
+                            strokeOpacity={0.4}
+                            className="cursor-pointer"
+                            onMouseEnter={() =>
+                              setTooltip({ x: sx, y: sy, shot })
+                            }
+                            onMouseLeave={() => setTooltip(null)}
+                          />
+                        );
                       }
-                      onMouseLeave={() => setTooltip(null)}
-                    >
-                      <line
-                        x1={sx - s}
-                        y1={sy - s}
-                        x2={sx + s}
-                        y2={sy + s}
-                        stroke={color}
-                        strokeWidth={1.5}
-                        strokeOpacity={0.5}
-                      />
-                      <line
-                        x1={sx + s}
-                        y1={sy - s}
-                        x2={sx - s}
-                        y2={sy + s}
-                        stroke={color}
-                        strokeWidth={1.5}
-                        strokeOpacity={0.5}
-                      />
-                    </g>
-                  );
-                })}
+
+                      // Missed shot: X mark
+                      const s = r * 0.7;
+                      return (
+                        <g
+                          key={shot.gameEventId}
+                          className="cursor-pointer"
+                          onMouseEnter={() =>
+                            setTooltip({ x: sx, y: sy, shot })
+                          }
+                          onMouseLeave={() => setTooltip(null)}
+                        >
+                          <line
+                            x1={sx - s}
+                            y1={sy - s}
+                            x2={sx + s}
+                            y2={sy + s}
+                            stroke={color}
+                            strokeWidth={1.5}
+                            strokeOpacity={0.5}
+                          />
+                          <line
+                            x1={sx + s}
+                            y1={sy - s}
+                            x2={sx - s}
+                            y2={sy + s}
+                            stroke={color}
+                            strokeWidth={1.5}
+                            strokeOpacity={0.5}
+                          />
+                        </g>
+                      );
+                    })}
+                </>
+              ) : (
+                <HexBinLayer
+                  shots={filtered}
+                  mapper={mapper}
+                  onHexHover={setHexTooltip}
+                />
+              )}
             </g>
           )}
         </Court>
 
-        {/* Tooltip */}
-        {tooltip && (
+        {/* Dot tooltip */}
+        {viewMode === 'dots' && tooltip && (
           <div
             className="absolute pointer-events-none bg-white border border-gray-200 rounded-lg px-3 py-2 text-xs text-gray-900 z-10 min-w-[160px] shadow-lg"
             style={{
@@ -224,6 +277,24 @@ export default function ShotChart({ shots, meta, boxScore }: ShotChartProps) {
               >
                 {tooltip.shot.made ? 'Made' : 'Missed'}
               </span>
+            </div>
+          </div>
+        )}
+
+        {/* Hex tooltip */}
+        {viewMode === 'heat' && hexTooltip && (
+          <div
+            className="absolute pointer-events-none bg-white border border-gray-200 rounded-lg px-3 py-2 text-xs text-gray-900 z-10 min-w-[120px] shadow-lg"
+            style={{
+              left: `${((hexTooltip.x + 15) / 520) * 100}%`,
+              top: `${((hexTooltip.y - 45) / 490) * 100}%`,
+            }}
+          >
+            <div className="font-semibold">
+              {(hexTooltip.fgPct * 100).toFixed(1)}% FG
+            </div>
+            <div className="text-gray-500">
+              {hexTooltip.makes}/{hexTooltip.attempts} shots
             </div>
           </div>
         )}
