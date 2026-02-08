@@ -17,12 +17,12 @@ export default function GameHeader({ meta }: GameHeaderProps) {
       <div className="flex items-center gap-4 flex-1">
         <div className="text-right flex-1">
           <div className="text-sm text-gray-400">{meta.awayTeam.city}</div>
-          <div className="text-lg font-bold" style={{ color: awayColors.primary }}>
+          <div className="text-lg font-bold" style={{ color: awayColors.chart }}>
             {meta.awayTeam.nickname}
           </div>
           <div className="text-xs text-gray-400">{meta.awayTeam.record}</div>
         </div>
-        <div className="text-4xl font-black tabular-nums" style={{ color: awayColors.primary }}>
+        <div className="text-4xl font-black tabular-nums" style={{ color: awayColors.chart }}>
           {meta.awayTeam.score}
         </div>
       </div>
@@ -36,12 +36,12 @@ export default function GameHeader({ meta }: GameHeaderProps) {
 
       {/* Home team */}
       <div className="flex items-center gap-4 flex-1">
-        <div className="text-4xl font-black tabular-nums" style={{ color: homeColors.primary }}>
+        <div className="text-4xl font-black tabular-nums" style={{ color: homeColors.chart }}>
           {meta.homeTeam.score}
         </div>
         <div className="flex-1">
           <div className="text-sm text-gray-400">{meta.homeTeam.city}</div>
-          <div className="text-lg font-bold" style={{ color: homeColors.primary }}>
+          <div className="text-lg font-bold" style={{ color: homeColors.chart }}>
             {meta.homeTeam.nickname}
           </div>
           <div className="text-xs text-gray-400">{meta.homeTeam.record}</div>

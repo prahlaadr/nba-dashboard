@@ -47,12 +47,14 @@ function NetworkGraph({
     const svg = d3.select(svgRef.current);
     svg.selectAll('*').remove();
 
+    const chartColor = colors.chart;
+
     const g = svg.append('g');
 
     const radiusScale = d3
       .scaleSqrt()
       .domain([0, maxAssists])
-      .range([6, 22]);
+      .range([6, 24]);
 
     const linkScale = d3
       .scaleLinear()
@@ -82,76 +84,93 @@ function NetworkGraph({
     const simNodes = simulation.nodes();
     const simLinks = (simulation.force('link') as d3.ForceLink<SimNode, SimLink>).links();
 
+    // Links — use team chart color
     const link = g
       .selectAll('.link')
       .data(simLinks)
       .join('line')
       .attr('class', 'link')
-      .attr('stroke', '#cbd5e1')
-      .attr('stroke-opacity', 0.6)
+      .attr('stroke', chartColor)
+      .attr('stroke-opacity', 0.3)
       .attr('stroke-width', (d: any) => linkScale(d.value));
 
+    // Edge labels — show count on edges with value >= 2
+    const edgeLabel = g
+      .selectAll('.edge-label')
+      .data(simLinks.filter((d: any) => d.value >= 2))
+      .join('text')
+      .attr('class', 'edge-label')
+      .attr('text-anchor', 'middle')
+      .attr('fill', '#9ca3af')
+      .attr('font-size', '8px')
+      .text((d: any) => d.value);
+
+    // Nodes — filled with team chart color
     const node = g
       .selectAll('.node')
       .data(simNodes)
       .join('circle')
       .attr('class', 'node')
       .attr('r', (d: any) => radiusScale(d.assists))
-      .attr('fill', colors.primary)
+      .attr('fill', chartColor)
       .attr('stroke', '#fff')
-      .attr('stroke-width', 1.5)
-      .attr('opacity', 0.85);
+      .attr('stroke-width', 2)
+      .attr('opacity', 0.9);
 
+    // Assist count inside node (only if radius large enough)
+    const countLabel = g
+      .selectAll('.count')
+      .data(simNodes.filter((d: any) => radiusScale(d.assists) >= 12))
+      .join('text')
+      .attr('class', 'count')
+      .attr('text-anchor', 'middle')
+      .attr('dy', '0.35em')
+      .attr('fill', '#fff')
+      .attr('font-size', '10px')
+      .attr('font-weight', '700')
+      .text((d: any) => d.assists);
+
+    // Name labels below nodes
     const label = g
       .selectAll('.label')
       .data(simNodes)
       .join('text')
       .attr('class', 'label')
       .attr('text-anchor', 'middle')
-      .attr('dy', (d: any) => radiusScale(d.assists) + 14)
+      .attr('dy', (d: any) => radiusScale(d.assists) + 12)
       .attr('fill', '#374151')
       .attr('font-size', '10px')
       .attr('font-weight', '500')
       .text((d: any) => d.id);
 
-    simulation.on('tick', () => {
-      link
-        .attr('x1', (d: any) => d.source.x)
-        .attr('y1', (d: any) => d.source.y)
-        .attr('x2', (d: any) => d.target.x)
-        .attr('y2', (d: any) => d.target.y);
-
-      node
-        .attr('cx', (d: any) => d.x)
-        .attr('cy', (d: any) => d.y);
-
-      label
-        .attr('x', (d: any) => d.x)
-        .attr('y', (d: any) => d.y);
-    });
-
+    // Run simulation synchronously
     simulation.alpha(1).restart();
-    for (let i = 0; i < 120; i++) simulation.tick();
+    for (let i = 0; i < 150; i++) simulation.tick();
     simulation.stop();
 
+    // Final position update
     link
       .attr('x1', (d: any) => d.source.x)
       .attr('y1', (d: any) => d.source.y)
       .attr('x2', (d: any) => d.target.x)
       .attr('y2', (d: any) => d.target.y);
+    edgeLabel
+      .attr('x', (d: any) => (d.source.x + d.target.x) / 2)
+      .attr('y', (d: any) => (d.source.y + d.target.y) / 2 - 4);
     node.attr('cx', (d: any) => d.x).attr('cy', (d: any) => d.y);
+    countLabel.attr('x', (d: any) => d.x).attr('y', (d: any) => d.y);
     label.attr('x', (d: any) => d.x).attr('y', (d: any) => d.y);
 
     return () => {
       simulation.stop();
     };
-  }, [graph, maxAssists, maxLinkValue, colors.primary]);
+  }, [graph, maxAssists, maxLinkValue, colors.chart]);
 
   return (
     <div className="flex-1 min-w-0">
       <h3
         className="text-center text-sm font-semibold mb-1"
-        style={{ color: colors.primary }}
+        style={{ color: colors.chart }}
       >
         {teamLabel}
       </h3>
@@ -186,7 +205,7 @@ export default function AssistNetwork({
         />
       </div>
       <p className="text-center text-gray-400 text-xs mt-2">
-        Node size = total assists | Line width = connection frequency
+        Number in circle = total assists | Line thickness = how often that pair connected
       </p>
     </div>
   );
