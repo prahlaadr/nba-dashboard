@@ -113,6 +113,14 @@ export interface AdvancedBoxScoreResponse {
   };
 }
 
+// Scoreboard
+export interface ScoreboardGame {
+  gameId: string;
+  status: string;
+  homeTeam: { abbreviation: string; score: number };
+  awayTeam: { abbreviation: string; score: number };
+}
+
 // Transformed types for components
 
 export interface ShotEvent {

@@ -8,13 +8,21 @@ import type {
   ShotEvent,
   PlayerBoxScore,
   GameMeta,
+  ScoreboardGame,
 } from '@/types/nba';
 
-const BASE_PATH = '/data/games';
+async function fetchFromApi<T>(
+  gameId: string,
+  endpoint: string
+): Promise<T> {
+  const res = await fetch(`/api/nba/game/${gameId}/${endpoint}`);
+  if (!res.ok) throw new Error(`API ${endpoint} returned ${res.status}`);
+  return res.json();
+}
 
-async function fetchJson<T>(gameId: string, file: string): Promise<T> {
-  const res = await fetch(`${BASE_PATH}/${gameId}/${file}`);
-  if (!res.ok) throw new Error(`Failed to fetch ${file}: ${res.status}`);
+async function fetchScoreboardApi(date: string): Promise<NbaResponse> {
+  const res = await fetch(`/api/nba/scoreboard?date=${encodeURIComponent(date)}`);
+  if (!res.ok) throw new Error(`Scoreboard API returned ${res.status}`);
   return res.json();
 }
 
@@ -131,16 +139,55 @@ export function parseBoxScore(response: NbaResponse): PlayerBoxScore[] {
   }));
 }
 
+export function parseScoreboard(response: NbaResponse): ScoreboardGame[] {
+  const headers = parseResultSet(response, 'GameHeader') as Record<string, unknown>[];
+  const lineScores = parseResultSet(response, 'LineScore') as Record<string, unknown>[];
+
+  return headers.map((g) => {
+    const gameId = g.GAME_ID as string;
+    const homeLine = lineScores.find(
+      (ls) => ls.GAME_ID === gameId && ls.TEAM_ID === g.HOME_TEAM_ID
+    );
+    const awayLine = lineScores.find(
+      (ls) => ls.GAME_ID === gameId && ls.TEAM_ID === g.VISITOR_TEAM_ID
+    );
+    return {
+      gameId,
+      status: g.GAME_STATUS_TEXT as string,
+      homeTeam: {
+        abbreviation: (homeLine?.TEAM_ABBREVIATION as string) ?? '',
+        score: (homeLine?.PTS as number) ?? 0,
+      },
+      awayTeam: {
+        abbreviation: (awayLine?.TEAM_ABBREVIATION as string) ?? '',
+        score: (awayLine?.PTS as number) ?? 0,
+      },
+    };
+  });
+}
+
 const QUERY_OPTS = {
   staleTime: 5 * 60 * 1000,
   gcTime: 30 * 60 * 1000,
   refetchOnWindowFocus: false,
 } as const;
 
+export function useScoreboard(date: string) {
+  return useQuery({
+    queryKey: ['scoreboard', date],
+    queryFn: async () => {
+      const raw = await fetchScoreboardApi(date);
+      return parseScoreboard(raw);
+    },
+    enabled: !!date,
+    ...QUERY_OPTS,
+  });
+}
+
 export function useGameData(gameId: string) {
   const metaRaw = useQuery({
     queryKey: ['meta_raw', gameId],
-    queryFn: () => fetchJson<NbaResponse>(gameId, 'meta.json'),
+    queryFn: () => fetchFromApi<NbaResponse>(gameId, 'meta'),
     ...QUERY_OPTS,
   });
 
@@ -154,7 +201,7 @@ export function useGameData(gameId: string) {
   const shots = useQuery({
     queryKey: ['shots', gameId],
     queryFn: async () => {
-      const raw = await fetchJson<NbaResponse>(gameId, 'shots.json');
+      const raw = await fetchFromApi<NbaResponse>(gameId, 'shots');
       return parseShots(raw);
     },
     ...QUERY_OPTS,
@@ -162,13 +209,13 @@ export function useGameData(gameId: string) {
 
   const playByPlay = useQuery({
     queryKey: ['playbyplay', gameId],
-    queryFn: () => fetchJson<PbpResponse>(gameId, 'playbyplay.json'),
+    queryFn: () => fetchFromApi<PbpResponse>(gameId, 'playbyplay'),
     ...QUERY_OPTS,
   });
 
   const boxscoreRaw = useQuery({
     queryKey: ['boxscore_raw', gameId],
-    queryFn: () => fetchJson<NbaResponse>(gameId, 'boxscore.json'),
+    queryFn: () => fetchFromApi<NbaResponse>(gameId, 'boxscore'),
     ...QUERY_OPTS,
   });
 
@@ -182,7 +229,7 @@ export function useGameData(gameId: string) {
   const advancedBoxScore = useQuery({
     queryKey: ['boxscore_advanced', gameId],
     queryFn: () =>
-      fetchJson<AdvancedBoxScoreResponse>(gameId, 'boxscore_advanced.json'),
+      fetchFromApi<AdvancedBoxScoreResponse>(gameId, 'boxscore-advanced'),
     ...QUERY_OPTS,
   });
 
