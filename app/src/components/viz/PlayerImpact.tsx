@@ -49,7 +49,7 @@ function TeamBars({
 
   return (
     <div className="flex-1 min-w-0">
-      <h4 className="text-xs font-semibold mb-2" style={{ color: colors.primary }}>
+      <h4 className="text-xs font-semibold mb-2" style={{ color: colors.chart }}>
         {teamLabel}
       </h4>
       <svg
@@ -74,7 +74,7 @@ function TeamBars({
               ? value >= 0
                 ? '#22c55e'
                 : '#ef4444'
-              : colors.primary;
+              : colors.chart;
 
           return (
             <g key={player.playerId} transform={`translate(0, ${y})`}>
