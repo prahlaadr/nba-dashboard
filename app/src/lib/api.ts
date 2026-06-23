@@ -4,7 +4,6 @@ import { useQuery } from '@tanstack/react-query';
 import type {
   NbaResponse,
   PbpResponse,
-  AdvancedBoxScoreResponse,
   ShotEvent,
   PlayerBoxScore,
   GameMeta,
@@ -226,13 +225,6 @@ export function useGameData(gameId: string) {
     ...QUERY_OPTS,
   });
 
-  const advancedBoxScore = useQuery({
-    queryKey: ['boxscore_advanced', gameId],
-    queryFn: () =>
-      fetchFromApi<AdvancedBoxScoreResponse>(gameId, 'boxscore-advanced'),
-    ...QUERY_OPTS,
-  });
-
   return {
     meta,
     metaRaw,
@@ -240,7 +232,6 @@ export function useGameData(gameId: string) {
     playByPlay,
     boxScore,
     boxscoreRaw,
-    advancedBoxScore,
     isLoading:
       meta.isLoading ||
       shots.isLoading ||

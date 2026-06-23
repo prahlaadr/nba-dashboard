@@ -46,7 +46,7 @@ export default function Home() {
         NBA Match Dashboard
       </h1>
       <p className="text-gray-500 mb-6">
-        Interactive game visualizations — shot charts, assist networks, score
+        Interactive game visualizations: shot charts, assist networks, and score
         timelines
       </p>
 

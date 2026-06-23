@@ -7,6 +7,18 @@ interface GameHeaderProps {
   meta: GameMeta;
 }
 
+// Renders the game date as a readable label, falling back to the raw
+// value if it is not a parseable date.
+function formatGameDate(value: string): string {
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return value;
+  return d.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
+}
+
 export default function GameHeader({ meta }: GameHeaderProps) {
   const homeColors = getTeamColors(meta.homeTeam.abbreviation);
   const awayColors = getTeamColors(meta.awayTeam.abbreviation);
@@ -31,7 +43,7 @@ export default function GameHeader({ meta }: GameHeaderProps) {
       <div className="text-center px-4">
         <div className="text-xs text-gray-400 uppercase tracking-wider font-medium">Final</div>
         <div className="text-gray-300 text-lg font-light my-1">-</div>
-        <div className="text-xs text-gray-400">{meta.date}</div>
+        <div className="text-xs text-gray-400">{formatGameDate(meta.date)}</div>
       </div>
 
       {/* Home team */}
